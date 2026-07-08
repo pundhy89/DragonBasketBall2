@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Student, StudentSkills, Coach } from '../types';
 import {
   Shield,
@@ -93,6 +94,31 @@ export default function StudentStats({
     notes: '',
     evaluatedBy: 'c_1'
   });
+
+  React.useEffect(() => {
+    const handleOpenModal = () => {
+      setEditingStudentId(null);
+      setNewStudentForm({
+        name: '',
+        age: 11,
+        height: 145,
+        weight: 38,
+        position: 'Point Guard',
+        classLevel: 'SD Berkembang',
+        parentName: '',
+        parentPhone: '',
+        parentEmail: '',
+        avatar: '',
+        fullBodyPhoto: '',
+        notes: '',
+        evaluatedBy: 'c_1'
+      });
+      setIsAddingStudent(true);
+    };
+
+    window.addEventListener('openAddStudentModal', handleOpenModal);
+    return () => window.removeEventListener('openAddStudentModal', handleOpenModal);
+  }, []);
 
   // Sync state when student selection changes
   React.useEffect(() => {
@@ -292,17 +318,25 @@ export default function StudentStats({
       notes: '',
       evaluatedBy: 'c_1'
     });
+
+    setIsAddingStudent(false);
+    setEditingStudentId(null);
+  };
+
+  return (
+    <div className="w-full" id="stats-dashboard">
           {/* Form Create / Edit Student (Modal) */}
-          <AnimatePresence>
-            {isAddingStudent && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-                  onClick={() => setIsAddingStudent(false)}
-                />
+          {createPortal(
+            <AnimatePresence>
+              {isAddingStudent && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                    onClick={() => setIsAddingStudent(false)}
+                  />
                 <motion.form
                   onSubmit={handleSaveStudent}
                   initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -531,14 +565,9 @@ export default function StudentStats({
                 </motion.form>
               </div>
             )}
-          </AnimatePresence>
-
-    setIsAddingStudent(false);
-    setEditingStudentId(null);
-  };
-
-  return (
-    <div className="w-full" id="stats-dashboard">
+          </AnimatePresence>,
+          document.body
+          )}
       
       {viewMode === 'list' && (
       <div className="flex flex-col gap-6" id="student-list-container">

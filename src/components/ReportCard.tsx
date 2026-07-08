@@ -7,8 +7,8 @@ import React, { useMemo, useState } from 'react';
 import { Student } from '../types';
 import { Trophy, Download, Send, Calendar, Medal, Award, Sparkles, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { toPng } from 'html-to-image';
+import { jsPDF } from 'jspdf';
 
 interface ReportCardProps {
   students: Student[];
@@ -78,24 +78,28 @@ export default function ReportCard({
       }
 
       // Hide anything that shouldn't be in the PDF if needed
+      const elWidth = certificateElement.scrollWidth;
+      const elHeight = certificateElement.scrollHeight;
       
-      const canvas = await html2canvas(certificateElement, {
-        scale: 2, // Higher resolution
+      const imgData = await toPng(certificateElement, {
+        pixelRatio: 2, // Higher resolution
         backgroundColor: '#13131a', // Match the dark theme background
-        useCORS: true,
+        width: elWidth,
+        height: elHeight,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+          margin: '0',
+        }
       });
 
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4',
+        orientation: elWidth > elHeight ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [elWidth, elHeight],
       });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.addImage(imgData, 'PNG', 0, 0, elWidth, elHeight);
       pdf.save(`RAPOR_BASKET_${student.name.replace(/\s+/g, '_').toUpperCase()}.pdf`);
 
       setDownloadSuccess(true);

@@ -811,7 +811,6 @@ export default function App() {
             >
               <CoachManager
                 coaches={coaches}
-                onUpdateStudent={handleUpdateStudent}
                 onAddCoach={handleAddCoach}
                 onUpdateCoach={handleUpdateCoach}
                 onDeleteCoach={handleDeleteCoach}
@@ -1004,7 +1003,7 @@ export default function App() {
         {/* Center Add Button */}
         <div className="relative -top-5 flex flex-col items-center">
           <button 
-            onClick={() => { setActiveTab('stats'); setTimeout(() => document.getElementById('btn-trigger-add-student')?.click(), 100) }}
+            onClick={() => { setActiveTab('stats'); setTimeout(() => window.dispatchEvent(new CustomEvent('openAddStudentModal')), 150) }}
             className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-orange-500 flex items-center justify-center border-4 border-[#0B0A10] text-white shadow-[0_0_15px_rgba(249,115,22,0.4)]"
           >
             <Plus className="w-6 h-6" />
