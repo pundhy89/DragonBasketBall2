@@ -1,0 +1,240 @@
+          {/* Form Create / Edit Student (Modal) */}
+          <AnimatePresence>
+            {isAddingStudent && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                  onClick={() => setIsAddingStudent(false)}
+                />
+                <motion.form
+                  onSubmit={handleSaveStudent}
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="relative bg-[#0B0A10] border border-orange-500/30 rounded-2xl p-5 md:p-6 w-full max-w-lg shadow-2xl space-y-4 text-xs text-slate-300 max-h-[90vh] overflow-y-auto custom-scrollbar z-10"
+                >
+                  <div className="flex justify-between items-center border-b border-[#2a2a35] pb-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      {editingStudentId ? <Edit3 className="w-4 h-4 text-orange-500" /> : <UserPlus className="w-4 h-4 text-orange-500" />}
+                      <span className="font-bold text-white uppercase text-[11px] tracking-widest">
+                        {editingStudentId ? 'EDIT DATA MURID' : 'FORMULIR MURID BARU'}
+                      </span>
+                    </div>
+                    <button type="button" onClick={() => setIsAddingStudent(false)} className="text-slate-400 hover:text-white transition-colors">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Name */}
+                  <div className="space-y-1.5">
+                    <label className="font-medium text-slate-400 block text-[11px]">Nama Lengkap *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Rian Perkasa"
+                      value={newStudentForm.name}
+                      onChange={(e) => setNewStudentForm(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full text-xs p-2.5 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500/50"
+                    />
+                  </div>
+
+                  {/* Grid for parameters */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="font-medium text-slate-400 block text-[10px] mb-1">Umur (Thn)</label>
+                      <input
+                        type="number"
+                        min="6"
+                        max="19"
+                        value={newStudentForm.age}
+                        onChange={(e) => setNewStudentForm(prev => ({ ...prev, age: Number(e.target.value) }))}
+                        className="w-full text-xs p-2 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-medium text-slate-400 block text-[10px] mb-1">Tinggi (cm)</label>
+                      <input
+                        type="number"
+                        min="100"
+                        max="220"
+                        value={newStudentForm.height}
+                        onChange={(e) => setNewStudentForm(prev => ({ ...prev, height: Number(e.target.value) }))}
+                        className="w-full text-xs p-2 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-medium text-slate-400 block text-[10px] mb-1">Berat (kg)</label>
+                      <input
+                        type="number"
+                        min="20"
+                        max="120"
+                        value={newStudentForm.weight}
+                        onChange={(e) => setNewStudentForm(prev => ({ ...prev, weight: Number(e.target.value) }))}
+                        className="w-full text-xs p-2 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Grid for class division & position */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-medium text-slate-400 block text-[10px] mb-1">Tingkat Kelas</label>
+                      <select
+                        value={newStudentForm.classLevel}
+                        onChange={(e) => setNewStudentForm(prev => ({ ...prev, classLevel: e.target.value as any }))}
+                        className="w-full text-[11px] p-2 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white font-bold cursor-pointer"
+                      >
+                        {CLASS_LEVELS.map(level => (
+                          <option key={level} value={level}>{level}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-medium text-slate-400 block text-[10px] mb-1">Posisi Bermain</label>
+                      <select
+                        value={newStudentForm.position}
+                        onChange={(e) => setNewStudentForm(prev => ({ ...prev, position: e.target.value as any }))}
+                        className="w-full text-[11px] p-2 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white font-medium cursor-pointer"
+                      >
+                        {BASKETBALL_POSITIONS.map(pos => (
+                          <option key={pos} value={pos}>{pos}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Parent Contact */}
+                  <div className="space-y-2 border-t border-[#2a2a35] pt-3 mt-3">
+                    <span className="font-bold text-orange-500 block text-[10px] uppercase tracking-widest">Kontak Wali / Orang Tua</span>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <input
+                          type="text"
+                          placeholder="Nama Orang Tua"
+                          value={newStudentForm.parentName}
+                          onChange={(e) => setNewStudentForm(prev => ({ ...prev, parentName: e.target.value }))}
+                          className="w-full text-xs p-2.5 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white placeholder-slate-500"
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          placeholder="No. WhatsApp"
+                          value={newStudentForm.parentPhone}
+                          onChange={(e) => setNewStudentForm(prev => ({ ...prev, parentPhone: e.target.value }))}
+                          className="w-full text-xs p-2.5 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white placeholder-slate-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Photo URLs / File Uploads */}
+                  <div className="space-y-3 pt-1">
+                    <div>
+                      <label className="font-medium text-slate-400 block text-[10px] mb-1">Foto Wajah (URL / Upload) *</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="https://example.com/foto-wajah.jpg (atau upload)"
+                          value={newStudentForm.avatar}
+                          onChange={(e) => setNewStudentForm(prev => ({ ...prev, avatar: e.target.value }))}
+                          className="flex-1 min-w-0 text-xs p-2.5 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white placeholder-slate-500 outline-none focus:border-orange-500/50"
+                        />
+                        <input 
+                          type="file" 
+                          id="upload-avatar" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setNewStudentForm(prev => ({ ...prev, avatar: reader.result as string }));
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                        <label 
+                          htmlFor="upload-avatar" 
+                          className="flex-shrink-0 cursor-pointer bg-[#2a2a35] hover:bg-orange-500 hover:text-white transition-colors text-slate-300 text-[10px] font-bold uppercase tracking-widest px-3 py-2.5 rounded-xl flex items-center justify-center"
+                        >
+                          Upload
+                        </label>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="font-medium text-slate-400 block text-[10px] mb-1">Foto 1 Badan (URL / Upload) - Opsional</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="https://example.com/foto-full.jpg (atau upload)"
+                          value={newStudentForm.fullBodyPhoto}
+                          onChange={(e) => setNewStudentForm(prev => ({ ...prev, fullBodyPhoto: e.target.value }))}
+                          className="flex-1 min-w-0 text-xs p-2.5 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white placeholder-slate-500 outline-none focus:border-orange-500/50"
+                        />
+                        <input 
+                          type="file" 
+                          id="upload-fullbody" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setNewStudentForm(prev => ({ ...prev, fullBodyPhoto: reader.result as string }));
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                        <label 
+                          htmlFor="upload-fullbody" 
+                          className="flex-shrink-0 cursor-pointer bg-[#2a2a35] hover:bg-orange-500 hover:text-white transition-colors text-slate-300 text-[10px] font-bold uppercase tracking-widest px-3 py-2.5 rounded-xl flex items-center justify-center"
+                        >
+                          Upload
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Coach Selection */}
+                  <div className="pt-1">
+                    <label className="font-medium text-slate-400 block text-[10px] mb-1">Coach Penilai Awal</label>
+                    <select
+                      value={newStudentForm.evaluatedBy}
+                      onChange={(e) => setNewStudentForm(prev => ({ ...prev, evaluatedBy: e.target.value }))}
+                      className="w-full text-xs p-2 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white font-medium cursor-pointer"
+                    >
+                      {coaches.map(c => (
+                        <option key={c.id} value={c.id}>{c.name} ({c.role})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* notes */}
+                  <div className="pt-1">
+                    <textarea
+                      rows={2}
+                      placeholder="Tulis catatan pendukung awal..."
+                      value={newStudentForm.notes}
+                      onChange={(e) => setNewStudentForm(prev => ({ ...prev, notes: e.target.value }))}
+                      className="w-full text-xs p-2.5 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none placeholder-slate-500"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold tracking-widest uppercase text-[11px] py-3 px-4 rounded-xl shadow-lg transition-all cursor-pointer text-center block mt-3"
+                  >
+                    {editingStudentId ? 'SIMPAN PERUBAHAN' : 'SIMPAN ATHLETE BARU'}
+                  </button>
+                </motion.form>
+              </div>
+            )}
+          </AnimatePresence>

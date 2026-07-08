@@ -1,0 +1,147 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn();
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidStudent(data) {
+      return data.keys().hasAll(['name', 'avatar', 'age', 'height', 'weight', 'position', 'parentName', 'parentPhone', 'parentEmail', 'skills', 'notes', 'attendanceHistory', 'classLevel', 'createdAt', 'updatedAt'])
+        && data.keys().size() >= 15
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.avatar is string && data.avatar.size() <= 1000
+        && data.age is number && data.age >= 0 && data.age <= 100
+        && data.height is number && data.height >= 0 && data.height <= 300
+        && data.weight is number && data.weight >= 0 && data.weight <= 200
+        && data.position is string && data.position in ['Point Guard', 'Shooting Guard', 'Small Forward', 'Power Forward', 'Center']
+        && data.parentName is string && data.parentName.size() <= 100
+        && data.parentPhone is string && data.parentPhone.size() <= 50
+        && data.parentEmail is string && data.parentEmail.size() <= 100
+        && data.skills is map
+        && data.skills.keys().hasAll(['dribbling', 'shooting', 'passing', 'defense', 'physical', 'teamwork'])
+        && data.skills.dribbling is number && data.skills.dribbling >= 0 && data.skills.dribbling <= 100
+        && data.skills.shooting is number && data.skills.shooting >= 0 && data.skills.shooting <= 100
+        && data.skills.passing is number && data.skills.passing >= 0 && data.skills.passing <= 100
+        && data.skills.defense is number && data.skills.defense >= 0 && data.skills.defense <= 100
+        && data.skills.physical is number && data.skills.physical >= 0 && data.skills.physical <= 100
+        && data.skills.teamwork is number && data.skills.teamwork >= 0 && data.skills.teamwork <= 100
+        && data.notes is string && data.notes.size() <= 1000
+        && data.attendanceHistory is map
+        && data.classLevel is string && data.classLevel in ['SD Lower', 'SD Berkembang', 'SD Upper', 'SMP', 'SMA']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCoach(data) {
+      return data.keys().hasAll(['name', 'role', 'avatar', 'specialty'])
+        && data.keys().size() >= 4
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.role is string && data.role.size() <= 100
+        && data.avatar is string && data.avatar.size() <= 1000
+        && data.specialty is string && data.specialty.size() <= 100;
+    }
+
+    function isValidPracticeSession(data) {
+      return data.keys().hasAll(['title', 'date', 'time', 'location', 'focus', 'coach', 'description', 'completed', 'createdAt', 'updatedAt'])
+        && data.keys().size() >= 10
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && data.date is string && data.date.size() <= 50
+        && data.time is string && data.time.size() <= 50
+        && data.location is string && data.location.size() <= 200
+        && data.focus is string && data.focus in ['Dribbling', 'Shooting', 'Passing', 'Defense', 'Stamina & Tactics', 'Scrimmage']
+        && data.coach is string && data.coach.size() <= 128
+        && data.description is string && data.description.size() <= 2000
+        && data.completed is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidParentNotification(data) {
+      return data.keys().hasAll(['studentId', 'studentName', 'parentName', 'parentPhone', 'title', 'message', 'timestamp', 'type', 'channel', 'status', 'createdAt'])
+        && data.keys().size() >= 11
+        && data.studentId is string && data.studentId.size() <= 128
+        && data.studentName is string && data.studentName.size() <= 100
+        && data.parentName is string && data.parentName.size() <= 100
+        && data.parentPhone is string && data.parentPhone.size() <= 50
+        && data.title is string && data.title.size() <= 200
+        && data.message is string && data.message.size() <= 2000
+        && data.timestamp is string && data.timestamp.size() <= 50
+        && data.type is string && data.type in ['attendance', 'report_card', 'schedule', 'general']
+        && data.channel is string && data.channel in ['WhatsApp', 'SMS', 'Email']
+        && data.status is string && data.status in ['sent', 'pending', 'failed']
+        && data.createdAt is timestamp;
+    }
+
+    function isValidTutorialVideo(data) {
+      return data.keys().hasAll(['title', 'category', 'difficulty', 'description', 'duration', 'videoPlaceholderId', 'steps', 'drills', 'tips', 'createdAt', 'updatedAt'])
+        && data.keys().size() >= 11
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && data.category is string && data.category in ['Dribbling', 'Shooting', 'Passing', 'Defense']
+        && data.difficulty is string && data.difficulty in ['Pemula', 'Menengah', 'Mahir']
+        && data.description is string && data.description.size() <= 2000
+        && data.duration is string && data.duration.size() <= 50
+        && data.videoPlaceholderId is string && data.videoPlaceholderId.size() <= 100
+        && data.steps is list && data.steps.size() <= 20
+        && data.drills is list && data.drills.size() <= 20
+        && data.tips is list && data.tips.size() <= 20
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /students/{studentId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && isValidId(studentId) && isValidStudent(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time && incoming().keys().size() == 15;
+      allow update: if isVerified() && isValidId(studentId) && isValidStudent(incoming()) && incoming().updatedAt == request.time && incoming().createdAt == existing().createdAt;
+      allow delete: if isVerified() && isValidId(studentId);
+    }
+
+    match /coaches/{coachId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && isValidId(coachId) && isValidCoach(incoming()) && incoming().keys().size() == 4;
+      allow update: if isVerified() && isValidId(coachId) && isValidCoach(incoming());
+      allow delete: if isVerified() && isValidId(coachId);
+    }
+
+    match /practiceSessions/{sessionId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && isValidId(sessionId) && isValidPracticeSession(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time && incoming().keys().size() == 10;
+      allow update: if isVerified() && isValidId(sessionId) && isValidPracticeSession(incoming()) && incoming().updatedAt == request.time && incoming().createdAt == existing().createdAt;
+      allow delete: if isVerified() && isValidId(sessionId);
+    }
+
+    match /parentNotifications/{notificationId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && isValidId(notificationId) && isValidParentNotification(incoming()) && incoming().createdAt == request.time && incoming().keys().size() == 11;
+      allow update: if isVerified() && isValidId(notificationId) && isValidParentNotification(incoming()) && incoming().createdAt == existing().createdAt;
+      allow delete: if isVerified() && isValidId(notificationId);
+    }
+
+    match /tutorialVideos/{videoId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && isValidId(videoId) && isValidTutorialVideo(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time && incoming().keys().size() == 11;
+      allow update: if isVerified() && isValidId(videoId) && isValidTutorialVideo(incoming()) && incoming().updatedAt == request.time && incoming().createdAt == existing().createdAt;
+      allow delete: if isVerified() && isValidId(videoId);
+    }
+  }
+}

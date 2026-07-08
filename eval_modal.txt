@@ -1,0 +1,88 @@
+      {/* Daily Evaluation Modal */}
+      <AnimatePresence>
+        {evalStudentId && evalForm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              onClick={() => setEvalStudentId(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-[#0B0A10] border border-orange-500/30 rounded-2xl p-5 md:p-6 w-full max-w-lg shadow-2xl space-y-4 text-xs text-slate-300 max-h-[90vh] overflow-y-auto custom-scrollbar z-10"
+            >
+              <div className="flex justify-between items-center border-b border-[#2a2a35] pb-3 mb-3">
+                <div className="flex items-center gap-2">
+                  <Edit3 className="w-4 h-4 text-orange-500" />
+                  <span className="font-bold text-white uppercase text-[11px] tracking-widest">
+                    Evaluasi Harian & Penilaian Sesi
+                  </span>
+                </div>
+                <button type="button" onClick={() => setEvalStudentId(null)} className="text-slate-400 hover:text-white transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {Object.entries(evalForm.skills).map(([skill, val]) => (
+                    <div key={skill} className="space-y-1">
+                      <div className="flex justify-between items-center text-[10px]">
+                        <label className="font-bold uppercase tracking-widest text-slate-400">{skill}</label>
+                        <span className="text-orange-500 font-bold">{val}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={val}
+                        onChange={(e) => setEvalForm({
+                          ...evalForm,
+                          skills: {
+                            ...evalForm.skills,
+                            [skill]: parseInt(e.target.value, 10)
+                          }
+                        })}
+                        className="w-full accent-orange-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold uppercase tracking-widest text-[10px] text-slate-400">Catatan Harian (Opsional)</label>
+                  <textarea
+                    placeholder="Contoh: Fokus latihan hari ini baik, butuh perbaikan di footwork."
+                    value={evalForm.notes}
+                    onChange={(e) => setEvalForm({ ...evalForm, notes: e.target.value })}
+                    className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500/50 min-h-[80px]"
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (onUpdateStudent) {
+                      onUpdateStudent(evalStudentId, {
+                        skills: evalForm.skills,
+                        notes: evalForm.notes,
+                        evaluatedBy: sessionCoachId
+                      });
+                      setAlertMessage(`Evaluasi berhasil disimpan oleh ${selectedCoach.name}.`);
+                      setTimeout(() => setAlertMessage(null), 4000);
+                    }
+                    setEvalStudentId(null);
+                  }}
+                  className="w-full bg-gradient-to-r from-purple-700 to-orange-500 text-white font-bold uppercase tracking-widest py-3 rounded-xl shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:shadow-[0_4px_25px_rgba(249,115,22,0.5)] transition-all flex items-center justify-center gap-2 mt-2"
+                >
+                  <Check className="w-4 h-4" />
+                  Simpan Evaluasi
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>

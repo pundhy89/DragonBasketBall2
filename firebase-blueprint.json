@@ -1,0 +1,132 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student",
+      "description": "A student in the basketball academy.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "age": { "type": "number" },
+        "height": { "type": "number" },
+        "weight": { "type": "number" },
+        "position": { "type": "string", "enum": ["Point Guard", "Shooting Guard", "Small Forward", "Power Forward", "Center"] },
+        "parentName": { "type": "string" },
+        "parentPhone": { "type": "string" },
+        "parentEmail": { "type": "string" },
+        "skills": { "$ref": "#/entities/StudentSkills" },
+        "notes": { "type": "string" },
+        "attendanceHistory": { "type": "object" },
+        "classLevel": { "type": "string", "enum": ["SD Lower", "SD Berkembang", "SD Upper", "SMP", "SMA"] },
+        "evaluatedBy": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "avatar", "age", "height", "weight", "position", "parentName", "parentPhone", "parentEmail", "skills", "notes", "attendanceHistory", "classLevel", "createdAt", "updatedAt"]
+    },
+    "StudentSkills": {
+      "title": "StudentSkills",
+      "description": "A student's basketball skills.",
+      "type": "object",
+      "properties": {
+        "dribbling": { "type": "number" },
+        "shooting": { "type": "number" },
+        "passing": { "type": "number" },
+        "defense": { "type": "number" },
+        "physical": { "type": "number" },
+        "teamwork": { "type": "number" }
+      },
+      "required": ["dribbling", "shooting", "passing", "defense", "physical", "teamwork"]
+    },
+    "Coach": {
+      "title": "Coach",
+      "description": "A coach in the basketball academy.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "avatar": { "type": "string" },
+        "specialty": { "type": "string" }
+      },
+      "required": ["name", "role", "avatar", "specialty"]
+    },
+    "PracticeSession": {
+      "title": "PracticeSession",
+      "description": "A scheduled practice session.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "location": { "type": "string" },
+        "focus": { "type": "string", "enum": ["Dribbling", "Shooting", "Passing", "Defense", "Stamina & Tactics", "Scrimmage"] },
+        "coach": { "type": "string" },
+        "description": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "date", "time", "location", "focus", "coach", "description", "completed", "createdAt", "updatedAt"]
+    },
+    "ParentNotification": {
+      "title": "ParentNotification",
+      "description": "A notification sent to a parent.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "parentName": { "type": "string" },
+        "parentPhone": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "type": { "type": "string", "enum": ["attendance", "report_card", "schedule", "general"] },
+        "channel": { "type": "string", "enum": ["WhatsApp", "SMS", "Email"] },
+        "status": { "type": "string", "enum": ["sent", "pending", "failed"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["studentId", "studentName", "parentName", "parentPhone", "title", "message", "timestamp", "type", "channel", "status", "createdAt"]
+    },
+    "TutorialVideo": {
+      "title": "TutorialVideo",
+      "description": "A tutorial video for students.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "category": { "type": "string", "enum": ["Dribbling", "Shooting", "Passing", "Defense"] },
+        "difficulty": { "type": "string", "enum": ["Pemula", "Menengah", "Mahir"] },
+        "description": { "type": "string" },
+        "duration": { "type": "string" },
+        "videoPlaceholderId": { "type": "string" },
+        "steps": { "type": "array" },
+        "drills": { "type": "array" },
+        "tips": { "type": "array" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "category", "difficulty", "description", "duration", "videoPlaceholderId", "steps", "drills", "tips", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/students/{studentId}": {
+      "schema": "#/entities/Student",
+      "description": "Collection of all students in the academy."
+    },
+    "/coaches/{coachId}": {
+      "schema": "#/entities/Coach",
+      "description": "Collection of all coaches in the academy."
+    },
+    "/practiceSessions/{sessionId}": {
+      "schema": "#/entities/PracticeSession",
+      "description": "Collection of practice sessions."
+    },
+    "/parentNotifications/{notificationId}": {
+      "schema": "#/entities/ParentNotification",
+      "description": "Collection of notifications sent to parents."
+    },
+    "/tutorialVideos/{videoId}": {
+      "schema": "#/entities/TutorialVideo",
+      "description": "Collection of tutorial videos."
+    }
+  }
+}
