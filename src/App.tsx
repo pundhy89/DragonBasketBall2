@@ -16,7 +16,6 @@ import TutorialViewer from './components/TutorialViewer';
 import AttendanceManager from './components/AttendanceManager';
 import ScheduleManager from './components/ScheduleManager';
 import NotificationCenter from './components/NotificationCenter';
-import CoachManager from './components/CoachManager';
 
 // Icons
 import {
@@ -43,7 +42,11 @@ import {
   Save,
   Shield,
   Image as ImageIcon,
-  MapPin
+  MapPin,
+  ExternalLink,
+  Download,
+  Trash2,
+  Edit3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -79,12 +82,13 @@ export default function App() {
       bannerUrl: '',
       title: 'DRAGON',
       subtitle: 'BASKETBALL ACADEMY',
-      location: 'Banyuwangi, East Java'
+      location: 'Banyuwangi, East Java',
+      whatsappNumber: ''
     };
   });
 
   const [selectedStudentId, setSelectedStudentId] = useState<string>('std_1');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'tutorials' | 'stats' | 'report' | 'attendance' | 'schedule' | 'notifications' | 'settings' | 'coaches'>('coaches');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'tutorials' | 'stats' | 'report' | 'attendance' | 'schedule' | 'notifications' | 'settings' | 'coaches' | 'generator-coach' | 'generator-athlete'>('stats');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useFirebaseSync(setStudents, setSchedule, setNotifications, setCoaches);
@@ -222,6 +226,8 @@ export default function App() {
     const student = students.find(s => s.id === studentId);
     if (!student) return;
 
+    const fullMessage = `${message}\n\nSalam,\n${academySettings.title}\nWA: ${academySettings.whatsappNumber || '-'}`;
+
     const newNotif: ParentNotification = {
       id: `notif_${Date.now()}`,
       studentId: student.id,
@@ -229,7 +235,7 @@ export default function App() {
       parentName: student.parentName,
       parentPhone: student.parentPhone,
       title,
-      message,
+      message: fullMessage,
       timestamp: new Date().toISOString(),
       type,
       channel: 'WhatsApp',
@@ -238,17 +244,36 @@ export default function App() {
     
     if (user) syncNotificationToFirebase(newNotif);
     setNotifications(prev => [newNotif, ...prev]);
+
+    // Open WhatsApp URL if parent has phone number
+    if (student.parentPhone) {
+      const waNumber = student.parentPhone.replace(/\D/g, '');
+      const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(fullMessage)}`;
+      window.open(waUrl, '_blank');
+    }
   };
 
   const handleSendCustomNotification = (notif: Omit<ParentNotification, 'id' | 'timestamp' | 'status'>) => {
+    
+    const fullMessage = `${notif.message}\n\nSalam,\n${academySettings.title}\nWA: ${academySettings.whatsappNumber || '-'}`;
+    
     const newNotif: ParentNotification = {
       ...notif,
+      message: fullMessage,
       id: `notif_${Date.now()}`,
       timestamp: new Date().toISOString(),
       status: 'sent'
     };
+
     if (user) syncNotificationToFirebase(newNotif);
     setNotifications(prev => [newNotif, ...prev]);
+
+    // Open WhatsApp URL if channel is WhatsApp and parent has phone number
+    if (notif.channel === 'WhatsApp' && notif.parentPhone) {
+      const waNumber = notif.parentPhone.replace(/\D/g, '');
+      const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(fullMessage)}`;
+      window.open(waUrl, '_blank');
+    }
   };
 
   const handleClearNotifications = () => {
@@ -325,7 +350,8 @@ export default function App() {
         <div className="w-full max-w-7xl mx-auto flex items-center justify-between relative px-4 md:px-8 z-10">
           
           {/* Logo Brand Info */}
-          <div className="flex items-center gap-4 cursor-pointer relative z-10 group" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} title="Buka Menu">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 cursor-pointer relative z-10 group" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} title="Buka Menu">
             <div className="w-20 h-20 md:w-28 md:h-28 bg-[#0B0A10]/50 group-hover:bg-orange-500/10 transition-colors rounded-2xl flex items-center justify-center text-5xl border border-[#2a2a35] group-hover:border-orange-500/50 overflow-hidden shrink-0 shadow-lg relative">
                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm z-20">
                  {isMobileMenuOpen ? <X className="w-8 h-8 text-white" /> : <Menu className="w-8 h-8 text-white" />}
@@ -348,6 +374,10 @@ export default function App() {
                 {academySettings.location}
               </p>
             </div>
+          </div>
+          <button onClick={() => setActiveTab('settings')} className="hidden lg:flex items-center justify-center w-12 h-12 bg-[#13131a]/80 backdrop-blur-md rounded-2xl border border-[#2a2a35] hover:border-orange-500/50 hover:text-orange-500 transition-colors text-slate-400 shadow-lg cursor-pointer z-50" title="Pengaturan Akademi">
+            <Settings className="w-5 h-5" />
+          </button>
           </div>
         </div>
       </header>
@@ -373,16 +403,6 @@ export default function App() {
         >
           <Users className="w-4 h-4" />
           Atlet
-        </button>
-        <button
-          id="tab-btn-coaches"
-          onClick={() => setActiveTab('coaches')}
-          className={`text-[12px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'coaches' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
-          }`}
-        >
-          <Shield className="w-4 h-4" />
-          Pelatih
         </button>
         <button
           id="tab-btn-tutorials"
@@ -429,14 +449,37 @@ export default function App() {
         </button>
         <div className="w-[1px] h-8 bg-[#2a2a35] mx-2"></div>
         <button
-          id="tab-btn-settings"
-          onClick={() => setActiveTab('settings')}
+          id="tab-btn-coaches"
+          onClick={() => setActiveTab('coaches')}
           className={`text-[12px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'settings' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
+            activeTab === 'coaches' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
           }`}
         >
-          <Settings className="w-4 h-4" />
-          Pengaturan
+          <User className="w-4 h-4" />
+          Pelatih
+        </button>
+
+        <div className="w-[1px] h-8 bg-[#2a2a35] mx-2"></div>
+        
+        <button
+          id="tab-btn-gen-coach"
+          onClick={() => setActiveTab('generator-coach')}
+          className={`text-[12px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'generator-coach' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
+          }`}
+        >
+          <User className="w-4 h-4" />
+          Generator Pelatih
+        </button>
+        <button
+          id="tab-btn-gen-athlete"
+          onClick={() => setActiveTab('generator-athlete')}
+          className={`text-[12px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'generator-athlete' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          Generator Atlet
         </button>
       </nav>
 
@@ -451,11 +494,11 @@ export default function App() {
           >
             <div className="px-4 py-4 space-y-1 flex flex-col">
               {[
-                { id: 'coaches', label: 'Pelatih', icon: Shield },
                 { id: 'tutorials', label: 'Teknik & Video Tutorial', icon: Video },
                 { id: 'attendance', label: 'Absensi Harian Murid', icon: FileSpreadsheet },
                 { id: 'schedule', label: 'Jadwal Latihan Rutin', icon: Calendar },
-                { id: 'notifications', label: 'Notifikasi Orang Tua', icon: MessageSquare }
+                { id: 'notifications', label: 'Notifikasi Orang Tua', icon: MessageSquare },
+                { id: 'settings', label: 'Pengaturan Akademi', icon: Settings }
               ].map((item) => {
                 const Icon = item.icon;
                 return (
@@ -475,6 +518,33 @@ export default function App() {
                   </button>
                 );
               })}
+
+              <div className="w-full h-[1px] bg-[#2a2a35] my-2"></div>
+
+              <button
+                onClick={() => {
+                  setActiveTab('generator-coach');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-4 py-3 rounded-xl font-medium text-xs flex items-center gap-3 transition-all ${
+                  activeTab === 'generator-coach' ? 'bg-gradient-to-r from-purple-900/40 to-orange-900/40 text-orange-500 border border-orange-500/30 font-bold' : 'hover:bg-[#1c1c28] text-slate-400'
+                }`}
+              >
+                <User className="w-4 h-4" />
+                Generator Kartu Pelatih
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('generator-athlete');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-4 py-3 rounded-xl font-medium text-xs flex items-center gap-3 transition-all ${
+                  activeTab === 'generator-athlete' ? 'bg-gradient-to-r from-purple-900/40 to-orange-900/40 text-orange-500 border border-orange-500/30 font-bold' : 'hover:bg-[#1c1c28] text-slate-400'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                Generator Kartu Atlet
+              </button>
             </div>
           </motion.div>
         )}
@@ -547,16 +617,6 @@ export default function App() {
                         <FileSpreadsheet className="w-6 h-6" />
                       </div>
                       <span className="text-[10px] font-bold text-slate-300 group-hover:text-white uppercase tracking-widest text-center">Rapor Evaluasi</span>
-                    </button>
-
-                    <button
-                      onClick={() => setActiveTab('coaches')}
-                      className="bg-[#13131a] hover:bg-[#1c1c28] border border-[#2a2a35] hover:border-amber-500/50 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 transition-all group shadow-lg"
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 group-hover:bg-amber-500 group-hover:text-white flex items-center justify-center transition-colors">
-                        <Shield className="w-6 h-6" />
-                      </div>
-                      <span className="text-[10px] font-bold text-slate-300 group-hover:text-white uppercase tracking-widest text-center">Tim Pelatih</span>
                     </button>
                   </div>
 
@@ -800,6 +860,7 @@ export default function App() {
             </motion.div>
           )}
 
+
           {/* TAB: COACHES */}
           {activeTab === 'coaches' && (
             <motion.div
@@ -809,12 +870,103 @@ export default function App() {
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.3 }}
             >
-              <CoachManager
-                coaches={coaches}
-                onAddCoach={handleAddCoach}
-                onUpdateCoach={handleUpdateCoach}
-                onDeleteCoach={handleDeleteCoach}
-              />
+              <div className="max-w-7xl mx-auto space-y-6">
+                <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-6 md:p-8 shadow-lg">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-black text-white uppercase tracking-wider flex items-center gap-2"><User className="w-6 h-6 text-orange-500" /> Daftar Pelatih</h2>
+                    <a href="https://creative-id-hub.vercel.app/list" target="_blank" rel="noopener noreferrer" className="bg-gradient-to-r from-purple-600 to-orange-500 hover:opacity-90 text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 transition-opacity text-xs uppercase tracking-widest shadow-lg">
+                      <Download className="w-4 h-4" /> Import Kartu
+                    </a>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                    {coaches.map(coach => (
+                      <div key={coach.id} className="relative group rounded-3xl overflow-hidden border border-[#2a2a35] bg-[#1c1c28] aspect-[900/550] shadow-xl">
+                        {coach.avatar?.startsWith('http') || coach.avatar?.startsWith('data:') ? (
+                          <img src={coach.avatar} alt={coach.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#1c1c28] to-[#13131a]">
+                            <div className="text-5xl mb-4">{coach.avatar || '👤'}</div>
+                            <h3 className="text-white font-bold text-xl">{coach.name}</h3>
+                            <p className="text-orange-500 text-sm font-bold uppercase tracking-widest mt-2">{coach.role}</p>
+                          </div>
+                        )}
+                        
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 backdrop-blur-sm z-10">
+                          <a href={`https://creative-id-hub.vercel.app/?id=${coach.id}`} target="_blank" rel="noopener noreferrer" className="bg-blue-500 hover:bg-blue-600 text-white p-3.5 rounded-2xl transition-colors shadow-lg" title="Edit Kartu">
+                            <Edit3 className="w-6 h-6" />
+                          </a>
+                          <button onClick={() => {
+                            if (confirm(`Hapus kartu pelatih ${coach.name}?`)) {
+                              deleteCoachFromFirebase(coach.id);
+                            }
+                          }} className="bg-red-500 hover:bg-red-600 text-white p-3.5 rounded-2xl transition-colors shadow-lg" title="Hapus Kartu">
+                            <Trash2 className="w-6 h-6" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          
+          {/* TAB: GENERATOR COACH */}
+          {activeTab === 'generator-coach' && (
+            <motion.div
+              key="generator-coach"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="h-[calc(100vh-160px)] min-h-[600px] w-full"
+            >
+              <div className="max-w-7xl mx-auto h-full space-y-6">
+                <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-2 h-full shadow-lg overflow-hidden flex flex-col">
+                  <div className="px-4 py-3 border-b border-[#2a2a35] flex items-center gap-2 shrink-0">
+                    <User className="w-5 h-5 text-orange-500" /> 
+                    <h2 className="text-lg font-black text-white uppercase tracking-wider">Generator Kartu Pelatih</h2>
+                  </div>
+                  <div className="flex-1 w-full bg-white relative rounded-b-2xl overflow-hidden">
+                    <iframe 
+                      src="https://creative-id-hub.vercel.app/" 
+                      className="absolute inset-0 w-full h-full border-0"
+                      title="Generator Kartu Pelatih"
+                      allow="camera; microphone; fullscreen; display-capture; picture-in-picture; clipboard-write; clipboard-read"
+                    ></iframe>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB: GENERATOR ATHLETE */}
+          {activeTab === 'generator-athlete' && (
+            <motion.div
+              key="generator-athlete"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="h-[calc(100vh-160px)] min-h-[600px] w-full"
+            >
+              <div className="max-w-7xl mx-auto h-full space-y-6">
+                <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-2 h-full shadow-lg overflow-hidden flex flex-col">
+                  <div className="px-4 py-3 border-b border-[#2a2a35] flex items-center gap-2 shrink-0">
+                    <Users className="w-5 h-5 text-orange-500" /> 
+                    <h2 className="text-lg font-black text-white uppercase tracking-wider">Generator Kartu Atlet</h2>
+                  </div>
+                  <div className="flex-1 w-full bg-white relative rounded-b-2xl overflow-hidden">
+                    <iframe 
+                      src="https://generatoratletcard.vercel.app/" 
+                      className="absolute inset-0 w-full h-full border-0"
+                      title="Generator Kartu Atlet"
+                      allow="camera; microphone; fullscreen; display-capture; picture-in-picture; clipboard-write; clipboard-read"
+                    ></iframe>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           )}
 
@@ -952,6 +1104,17 @@ export default function App() {
                             className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors"
                           />
                         </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Nomor WhatsApp Notifikasi (Format: 628...)</label>
+                          <input
+                            type="text"
+                            value={academySettings.whatsappNumber || ''}
+                            onChange={(e) => setAcademySettings({...academySettings, whatsappNumber: e.target.value})}
+                            placeholder="Contoh: 6281234567890"
+                            className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1008,7 +1171,7 @@ export default function App() {
           >
             <Plus className="w-6 h-6" />
           </button>
-          <span className="text-[9px] text-slate-400 font-bold absolute -bottom-4 w-20 text-center">Tambah Atlet</span>
+          <span className="text-[9px] text-slate-400 font-bold absolute -bottom-4 w-20 text-center">Tambah Siswa</span>
         </div>
 
         <button
@@ -1019,11 +1182,11 @@ export default function App() {
           <span className="text-[9px] font-bold">Ranking</span>
         </button>
         <button
-          onClick={() => setActiveTab('settings')}
-          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'settings' ? 'text-orange-500' : 'text-slate-500'}`}
+          onClick={() => setActiveTab('coaches')}
+          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'coaches' ? 'text-orange-500' : 'text-slate-500'}`}
         >
-          <Settings className="w-5 h-5" />
-          <span className="text-[9px] font-bold">Pengaturan</span>
+          <User className="w-5 h-5" />
+          <span className="text-[9px] font-bold">Pelatih</span>
         </button>
       </div>
 

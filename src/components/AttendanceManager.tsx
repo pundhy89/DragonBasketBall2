@@ -42,7 +42,7 @@ export default function AttendanceManager({
   } | null>(null);
 
   const selectedCoach = useMemo(() => {
-    return coaches.find(c => c.id === sessionCoachId) || coaches[0];
+    return coaches.find(c => c.id === sessionCoachId) || coaches[0] || { id: 'fallback', name: 'Unknown Coach', role: 'Coach', avatar: '👤', specialty: '-' } as Coach;
   }, [coaches, sessionCoachId]);
 
   // Filter students by selected class level
@@ -140,8 +140,12 @@ export default function AttendanceManager({
 
         {/* Coach-in-Charge Dropdown */}
         <div className="bg-[#1c1c28] border border-[#2a2a35] rounded-xl p-3 flex items-center gap-3 self-start xl:self-auto min-w-[280px]">
-          <div className="w-9 h-9 rounded-full border border-orange-500/50 bg-[#13131a] flex items-center justify-center text-base shadow-sm shrink-0">
-            {selectedCoach.avatar}
+          <div className="w-9 h-9 rounded-full border border-orange-500/50 bg-[#13131a] flex items-center justify-center text-base shadow-sm shrink-0 overflow-hidden">
+            {selectedCoach.avatar?.startsWith('http') || selectedCoach.avatar?.startsWith('data:') ? (
+              <img src={selectedCoach.avatar} alt={selectedCoach.name} className="w-full h-full object-cover" />
+            ) : (
+              selectedCoach.avatar || '👤'
+            )}
           </div>
           <div className="flex-1">
             <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 block leading-none mb-1">Pelatih Pengampu Sesi:</label>
@@ -323,8 +327,12 @@ export default function AttendanceManager({
                       {/* Athlete Name Card */}
                       <td className="py-4 pl-2">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full border border-orange-500/30 bg-[#13131a] flex items-center justify-center text-lg shadow-sm">
-                            {s.avatar}
+                          <div className="w-10 h-10 rounded-full border border-orange-500/30 bg-[#13131a] flex items-center justify-center text-lg shadow-sm overflow-hidden">
+                            {s.avatar?.startsWith('http') || s.avatar?.startsWith('data:') ? (
+                              <img src={s.avatar} alt={s.name} className="w-full h-full object-cover" />
+                            ) : (
+                              s.avatar || '🏀'
+                            )}
                           </div>
                           <div>
                             <span className="font-bold text-white text-sm block leading-tight mb-0.5">{s.name}</span>

@@ -36,12 +36,11 @@ export default function ReportCard({
     setDownloadSuccess(false);
   }, [student]);
 
-  const skills = student.skills;
-
   const averageScore = useMemo(() => {
-    const total = (Object.values(skills) as number[]).reduce((a, b) => a + b, 0);
+    if (!student) return 0;
+    const total = (Object.values(student.skills) as number[]).reduce((a, b) => a + b, 0);
     return Math.round((total / 6) * 10) / 10;
-  }, [skills]);
+  }, [student]);
 
   const letterGrade = useMemo(() => {
     if (averageScore >= 85) return { grade: 'A', text: 'Sangat Baik (Excellent)', color: 'text-emerald-500', bg: 'bg-emerald-50' };
@@ -51,11 +50,22 @@ export default function ReportCard({
   }, [averageScore]);
 
   const attendanceRate = useMemo(() => {
+    if (!student) return 100;
     const history = Object.values(student.attendanceHistory);
     if (history.length === 0) return 100;
     const attended = history.filter(status => status === 'present' || status === 'late').length;
     return Math.round((attended / history.length) * 100);
   }, [student]);
+
+  if (!student) {
+    return (
+      <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-12 shadow-lg text-center text-slate-500 text-sm font-medium">
+        Pilih atau tambahkan siswa baru untuk melihat rapor.
+      </div>
+    );
+  }
+
+  const skills = student.skills;
 
   const handleSendNotification = () => {
     setIsSending(true);

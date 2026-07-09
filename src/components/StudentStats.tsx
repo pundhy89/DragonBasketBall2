@@ -183,7 +183,7 @@ export default function StudentStats({
   // Find Coach details
   const activeEvaluator = useMemo(() => {
     const evalId = isEditing ? editedEvaluator : (student?.evaluatedBy || 'c_1');
-    return coaches.find(c => c.id === evalId) || coaches[0];
+    return coaches.find(c => c.id === evalId) || coaches[0] || { id: 'fallback', name: 'Unknown Coach', role: 'Coach', avatar: '👤', specialty: '-' } as Coach;
   }, [coaches, student, isEditing, editedEvaluator]);
 
   // Radar Chart Calculations (300x300 viewBox, center 150, 150, max radius 100)
@@ -296,7 +296,7 @@ export default function StudentStats({
         parentPhone: newStudentForm.parentPhone || '0812-xxxx-xxxx',
         parentEmail: newStudentForm.parentEmail || (newStudentForm.name.toLowerCase().replace(/\s/g, '') + '@email.com'),
         skills: initialSkills,
-        notes: newStudentForm.notes || 'Murid baru kelas ' + newStudentForm.classLevel + '. Baru bergabung dengan akademi.',
+        notes: newStudentForm.notes || 'Siswa baru kelas ' + newStudentForm.classLevel + '. Baru bergabung dengan akademi.',
         classLevel: newStudentForm.classLevel,
         evaluatedBy: newStudentForm.evaluatedBy
       });
@@ -348,7 +348,7 @@ export default function StudentStats({
                     <div className="flex items-center gap-2">
                       {editingStudentId ? <Edit3 className="w-4 h-4 text-orange-500" /> : <UserPlus className="w-4 h-4 text-orange-500" />}
                       <span className="font-bold text-white uppercase text-[11px] tracking-widest">
-                        {editingStudentId ? 'EDIT DATA MURID' : 'FORMULIR MURID BARU'}
+                        {editingStudentId ? 'EDIT DATA SISWA' : 'FORMULIR SISWA BARU'}
                       </span>
                     </div>
                     <button type="button" onClick={() => setIsAddingStudent(false)} className="text-slate-400 hover:text-white transition-colors">
@@ -560,7 +560,7 @@ export default function StudentStats({
                     type="submit"
                     className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold tracking-widest uppercase text-[11px] py-3 px-4 rounded-xl shadow-lg transition-all cursor-pointer text-center block mt-3"
                   >
-                    {editingStudentId ? 'SIMPAN PERUBAHAN' : 'SIMPAN ATHLETE BARU'}
+                    {editingStudentId ? 'SIMPAN PERUBAHAN' : 'SIMPAN ATLET BARU'}
                   </button>
                 </motion.form>
               </div>
@@ -577,7 +577,7 @@ export default function StudentStats({
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-widest">
               <Users className="w-5 h-5 text-purple-500" />
-              Roster & Kelas
+              Data Siswa Atlet
             </h3>
             
             <button
@@ -706,7 +706,7 @@ export default function StudentStats({
                       <div className={`w-10 h-10 rounded-full border bg-[#13131a] flex items-center justify-center text-lg shrink-0 shadow-sm overflow-hidden ${
                         isSelected ? 'border-orange-500' : 'border-[#2a2a35]'
                       }`}>
-                        {s.avatar?.startsWith('http') ? (
+                        {s.avatar?.startsWith('http') || s.avatar?.startsWith('data:') ? (
                           <img src={s.avatar} alt={s.name} className="w-full h-full object-cover" />
                         ) : (
                           s.avatar || '🏀'
@@ -793,7 +793,7 @@ export default function StudentStats({
                 
                 {student.fullBodyPhoto ? (
                   <img src={student.fullBodyPhoto} alt={student.name} className="w-full h-full object-cover object-top relative z-10" />
-                ) : student.avatar?.startsWith('http') ? (
+                ) : (student.avatar?.startsWith('http') || student.avatar?.startsWith('data:')) ? (
                   <img src={student.avatar} alt={student.name} className="w-full h-full object-cover object-top relative z-10" />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-[#2a2a35] relative z-10 pb-20">
@@ -1147,8 +1147,12 @@ export default function StudentStats({
                   {/* Evaluator Coach Indicator Display */}
                   <div className="mb-5 bg-[#1c1c28] border border-[#2a2a35] rounded-2xl p-4 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full border border-orange-500/50 bg-[#13131a] flex items-center justify-center text-lg shadow-md">
-                        {activeEvaluator.avatar}
+                      <div className="w-10 h-10 rounded-full border border-orange-500/50 bg-[#13131a] flex items-center justify-center text-lg shadow-md overflow-hidden">
+                        {activeEvaluator.avatar?.startsWith('http') || activeEvaluator.avatar?.startsWith('data:') ? (
+                          <img src={activeEvaluator.avatar} alt={activeEvaluator.name} className="w-full h-full object-cover" />
+                        ) : (
+                          activeEvaluator.avatar || '👤'
+                        )}
                       </div>
                       <div>
                         <span className="text-[9px] text-slate-500 block font-bold uppercase tracking-widest leading-none mb-1">COACH PENILAI</span>
@@ -1256,7 +1260,7 @@ export default function StudentStats({
           </>
         ) : (
           <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-12 shadow-lg text-center text-slate-500 text-sm font-medium">
-            Pilih atau tambahkan murid baru untuk melihat rincian evaluasi.
+            Pilih atau tambahkan siswa baru untuk melihat rincian evaluasi.
           </div>
         )}
 
