@@ -86,3 +86,20 @@ export interface TutorialVideo {
   drills: string[];
   tips: string[];
 }
+
+export interface SavedCard {
+  id: string;
+  studentId: string;
+  savedAt: string;
+  name: string;
+  position: string;
+  height: number;
+  weight: number;
+  age: number;
+  attendanceRate: number;
+  letterGrade: { grade: string, text: string };
+  avatar: string;
+  fullBodyPhoto: string;
+  parentName: string;
+  parentPhone: string;
+}

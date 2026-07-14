@@ -11,15 +11,17 @@ import { useFirebaseSync, syncStudentToFirebase, deleteStudentFromFirebase, sync
 
 // Import components
 import StudentStats from './components/StudentStats';
+import { SavedCards } from './components/SavedCards';
+import { SavedCard } from './types';
 import ReportCard from './components/ReportCard';
 import TutorialViewer from './components/TutorialViewer';
 import AttendanceManager from './components/AttendanceManager';
 import ScheduleManager from './components/ScheduleManager';
 import NotificationCenter from './components/NotificationCenter';
+import CardGenerator from './components/CardGenerator';
 
 // Icons
-import {
-  Trophy,
+import { Search, Sun, Moon, Trophy,
   Users,
   User,
   Calendar,
@@ -46,12 +48,33 @@ import {
   ExternalLink,
   Download,
   Trash2,
-  Edit3
-} from 'lucide-react';
+  Edit3,
+  Image
+ , UserPlus, BookOpen} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
   const { user, signInWithGoogle, logout } = useAuth();
+
+  const SidebarButton = ({ id, icon, label, badge }: { id: any, icon: any, label: string, badge?: number }) => (
+    <button
+      onClick={() => setActiveTab(id)}
+      className={`w-full text-left px-4 py-3 rounded-xl font-medium text-xs flex items-center justify-between transition-all ${
+        activeTab === id ? 'bg-gradient-to-r from-purple-900/40 to-blue-900/40 text-blue-500 border border-blue-500/30 font-bold' : 'hover:neu-flat-sm text-secondary border border-transparent'
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        {icon}
+        {label}
+      </div>
+      {!!badge && badge > 0 && (
+        <span className="bg-red-500 text-primary text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+
   
   // --- Persistent LocalState Engine ---
   const [students, setStudents] = useState<Student[]>(() => {
@@ -88,10 +111,41 @@ export default function App() {
   });
 
   const [selectedStudentId, setSelectedStudentId] = useState<string>('std_1');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'tutorials' | 'stats' | 'report' | 'attendance' | 'schedule' | 'notifications' | 'settings' | 'coaches' | 'generator-coach' | 'generator-athlete'>('stats');
+  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
+  const [importedCoachIds, setImportedCoachIds] = useState<string[]>([]);
+  const [showImportedCoaches, setShowImportedCoaches] = useState(false);
+  const [showSavedCards, setShowSavedCards] = useState(false);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'tutorials' | 'stats' | 'report' | 'attendance' | 'schedule' | 'notifications' | 'settings' | 'coaches' | 'generator-coach' | 'generator-athlete' | 'generator-student' | 'saved-cards'>('stats');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('hoop_portal_theme');
+    return (saved as 'light' | 'dark') || 'dark';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('hoop_portal_theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+
   useFirebaseSync(setStudents, setSchedule, setNotifications, setCoaches);
+
+  
+  useEffect(() => {
+    localStorage.setItem('hoop_portal_imported_coaches', JSON.stringify(importedCoachIds));
+  }, [importedCoachIds]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('hoop_portal_imported_coaches');
+    if (stored) {
+      try { setImportedCoachIds(JSON.parse(stored)); } catch (e) {}
+    }
+  }, []);
 
   // Sync state to LocalStorage
   useEffect(() => {
@@ -110,9 +164,43 @@ export default function App() {
     localStorage.setItem('hoop_portal_coaches', JSON.stringify(coaches));
   }, [coaches]);
 
+
   useEffect(() => {
     localStorage.setItem('hoop_portal_settings', JSON.stringify(academySettings));
   }, [academySettings]);
+
+  // Handle cross-origin messages from the Generator Iframe (Cara 1)
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Listen for message from the generator
+      if (event.data && (event.data.type === 'IMPORT_COACH' || event.data.action === 'export-coach')) {
+        const payload = event.data.payload || event.data.data;
+        if (payload && payload.name) {
+          const newCoach: import('./types').Coach = {
+            id: payload.id || `coach_${Date.now()}`,
+            name: payload.name,
+            role: payload.role || payload.jabatan || 'Pelatih',
+            avatar: payload.avatar || payload.photo || '👤',
+            specialty: payload.specialty || payload.spesialisasi || 'Umum',
+            experience: payload.experience || payload.pengalaman || '5 Tahun',
+            certification: payload.certification || payload.sertifikasi || 'Nasional'
+          };
+          
+          setCoaches(prev => {
+            const isExist = prev.some(c => c.id === newCoach.id);
+            if (isExist) return prev; // Prevent duplicate if same ID
+            const next = [...prev, newCoach];
+            syncCoachToFirebase(newCoach);
+            return next;
+          });
+          alert(`Berhasil mengimpor pelatih: ${newCoach.name}`);
+        }
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
 
   // --- Callbacks for State Editing ---
   const handleUpdateSkills = (studentId: string, skills: StudentSkills, notes: string, evaluatedBy?: string) => {
@@ -331,227 +419,128 @@ export default function App() {
   }, [students]);
 
   return (
-    <div className="min-h-screen font-sans flex flex-col antialiased bg-[#0B0A10] text-[#e2e8f0] pb-20 lg:pb-0 relative overflow-hidden">
+    <div className="min-h-screen font-sans flex antialiased bg-soft-gradient text-primary relative overflow-hidden">
       
       {/* Background Ambient Glow */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] mix-blend-screen animate-pulse duration-1000"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-orange-600/10 blur-[120px] mix-blend-screen animate-pulse duration-1000" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] mix-blend-screen animate-pulse duration-1000" style={{ animationDelay: '1s' }}></div>
       </div>
 
-      {/* Top Banner & Header (Customizable Academy Info) */}
-      <header className="bg-[#13131a]/80 backdrop-blur-md relative z-50 w-full overflow-hidden aspect-[3452/864] flex flex-col justify-center">
-        {academySettings.bannerUrl && (
-          <div className="absolute inset-0 z-0">
-            <img src={academySettings.bannerUrl} alt="Banner" className="w-full h-full object-cover opacity-40" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#13131a]/90 via-[#13131a]/60 to-transparent"></div>
-          </div>
-        )}
-        <div className="w-full max-w-7xl mx-auto flex items-center justify-between relative px-4 md:px-8 z-10">
-          
-          {/* Logo Brand Info */}
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-4 cursor-pointer relative z-10 group" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} title="Buka Menu">
-            <div className="w-20 h-20 md:w-28 md:h-28 bg-[#0B0A10]/50 group-hover:bg-orange-500/10 transition-colors rounded-2xl flex items-center justify-center text-5xl border border-[#2a2a35] group-hover:border-orange-500/50 overflow-hidden shrink-0 shadow-lg relative">
-               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm z-20">
-                 {isMobileMenuOpen ? <X className="w-8 h-8 text-white" /> : <Menu className="w-8 h-8 text-white" />}
-               </div>
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex flex-col w-72 h-screen bg-secondary/95 backdrop-blur-md border-r border-theme z-50 relative shrink-0">
+        <div className="p-6 border-b border-theme flex items-center gap-4">
+            <div className="w-12 h-12 bg-primary/50 rounded-xl flex items-center justify-center border border-theme overflow-hidden shrink-0 shadow-lg">
                {academySettings.logoUrl ? (
-                 <img src={academySettings.logoUrl} alt="Logo" className="w-full h-full object-contain p-2" />
+                 <img src={academySettings.logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
                ) : (
                  academySettings.logoIcon
                )}
             </div>
-            <div className="flex flex-col justify-center">
-              <h1 className="text-xl md:text-3xl font-black uppercase tracking-tight text-white leading-none font-display mb-1 group-hover:text-orange-400 transition-colors">
+            <div className="flex flex-col justify-center overflow-hidden">
+              <h1 className="text-sm font-black uppercase tracking-tight text-primary truncate">
                 {academySettings.title}
               </h1>
-              <h2 className="text-sm md:text-lg font-bold uppercase tracking-widest text-orange-500 leading-none">
+              <h2 className="text-[10px] font-bold uppercase tracking-widest text-blue-500 truncate">
                 {academySettings.subtitle}
               </h2>
-              <p className="text-[10px] md:text-xs text-blue-400/80 font-bold tracking-widest mt-2 uppercase flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                {academySettings.location}
-              </p>
+            </div>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8 custom-scrollbar">
+          <div>
+            <h3 className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-3 px-2">Menu Utama</h3>
+            <div className="space-y-1">
+              <SidebarButton id="dashboard" icon={<Home className="w-4 h-4" />} label="Beranda" />
+              <SidebarButton id="stats" icon={<Users className="w-4 h-4" />} label="Data Atlet" />
+              <SidebarButton id="attendance" icon={<FileSpreadsheet className="w-4 h-4" />} label="Absensi" />
+              <SidebarButton id="schedule" icon={<Calendar className="w-4 h-4" />} label="Jadwal" />
+              <SidebarButton id="report" icon={<Trophy className="w-4 h-4" />} label="Rapor & Ranking" />
+              <SidebarButton id="tutorials" icon={<Video className="w-4 h-4" />} label="Video & Teknik" />
             </div>
           </div>
-          <button onClick={() => setActiveTab('settings')} className="hidden lg:flex items-center justify-center w-12 h-12 bg-[#13131a]/80 backdrop-blur-md rounded-2xl border border-[#2a2a35] hover:border-orange-500/50 hover:text-orange-500 transition-colors text-slate-400 shadow-lg cursor-pointer z-50" title="Pengaturan Akademi">
-            <Settings className="w-5 h-5" />
-          </button>
+
+          <div>
+            <h3 className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-3 px-2">Pelatih</h3>
+            <div className="space-y-1">
+              <SidebarButton id="coaches" icon={<User className="w-4 h-4" />} label="Data Pelatih" />
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-3 px-2">Tools & Generator</h3>
+            <div className="space-y-1">
+              <SidebarButton id="notifications" icon={<MessageSquare className="w-4 h-4" />} label="Notifikasi" badge={notifications.length} />
+              <SidebarButton id="generator-student" icon={<Image className="w-4 h-4" />} label="Gen. Kartu Siswa" />
+              <SidebarButton id="generator-athlete" icon={<ImageIcon className="w-4 h-4" />} label="Gen. Kartu Atlet" />
+              <SidebarButton id="generator-coach" icon={<User className="w-4 h-4" />} label="Gen. Kartu Pelatih" />
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-3 px-2">Sistem</h3>
+            <div className="space-y-1">
+              <SidebarButton id="settings" icon={<Settings className="w-4 h-4" />} label="Pengaturan Akademi" />
+            </div>
           </div>
         </div>
-      </header>
 
-      {/* Desktop Navigation (Floating Bottom Navbar) */}
-      <nav className="hidden lg:flex fixed bottom-8 left-1/2 -translate-x-1/2 items-center gap-1.5 bg-[#13131a]/95 backdrop-blur-md p-2 rounded-2xl border border-[#2a2a35] shadow-2xl z-50">
-        <button
-          id="tab-btn-dashboard"
-          onClick={() => setActiveTab('dashboard')}
-          className={`text-[12px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'dashboard' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
-          }`}
-        >
-          <Home className="w-4 h-4" />
-          Beranda
-        </button>
-        <button
-          id="tab-btn-stats"
-          onClick={() => setActiveTab('stats')}
-          className={`text-[12px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'stats' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          Atlet
-        </button>
-        <button
-          id="tab-btn-tutorials"
-          onClick={() => setActiveTab('tutorials')}
-          className={`text-[12px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'tutorials' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
-          }`}
-        >
-          <Video className="w-4 h-4" />
-          Teknik
-        </button>
-        <button
-          id="tab-btn-attendance"
-          onClick={() => setActiveTab('attendance')}
-          className={`text-[12px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'attendance' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
-          }`}
-        >
-          <FileSpreadsheet className="w-4 h-4" />
-          Absensi
-        </button>
-        <button
-          id="tab-btn-schedule"
-          onClick={() => setActiveTab('schedule')}
-          className={`text-[12px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'schedule' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
-          }`}
-        >
-          <Calendar className="w-4 h-4" />
-          Jadwal
-        </button>
-        <button
-          id="tab-btn-notifications"
-          onClick={() => setActiveTab('notifications')}
-          className={`text-[12px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer relative ${
-            activeTab === 'notifications' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
-          }`}
-        >
-          <MessageSquare className="w-4 h-4" />
-          Notif
-          {notifications.length > 0 && (
-            <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-[#13131a]" />
-          )}
-        </button>
-        <div className="w-[1px] h-8 bg-[#2a2a35] mx-2"></div>
-        <button
-          id="tab-btn-coaches"
-          onClick={() => setActiveTab('coaches')}
-          className={`text-[12px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'coaches' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
-          }`}
-        >
-          <User className="w-4 h-4" />
-          Pelatih
-        </button>
-
-        <div className="w-[1px] h-8 bg-[#2a2a35] mx-2"></div>
-        
-        <button
-          id="tab-btn-gen-coach"
-          onClick={() => setActiveTab('generator-coach')}
-          className={`text-[12px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'generator-coach' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
-          }`}
-        >
-          <User className="w-4 h-4" />
-          Generator Pelatih
-        </button>
-        <button
-          id="tab-btn-gen-athlete"
-          onClick={() => setActiveTab('generator-athlete')}
-          className={`text-[12px] font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'generator-athlete' ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white shadow-md' : 'hover:bg-[#1c1c28] text-slate-400'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          Generator Atlet
-        </button>
-      </nav>
-
-      {/* Mobile Drawer Navigation */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-[#13131a] border-b border-[#2a2a35] text-white overflow-hidden relative z-40"
+      
+        <div className="p-4 border-t border-theme">
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="w-full text-left px-4 py-3 rounded-xl font-medium text-xs flex items-center justify-between transition-all hover:bg-secondary/80 text-secondary border border-transparent neu-button"
           >
-            <div className="px-4 py-4 space-y-1 flex flex-col">
-              {[
-                { id: 'tutorials', label: 'Teknik & Video Tutorial', icon: Video },
-                { id: 'attendance', label: 'Absensi Harian Murid', icon: FileSpreadsheet },
-                { id: 'schedule', label: 'Jadwal Latihan Rutin', icon: Calendar },
-                { id: 'notifications', label: 'Notifikasi Orang Tua', icon: MessageSquare },
-                { id: 'settings', label: 'Pengaturan Akademi', icon: Settings }
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    id={`mobile-tab-${item.id}`}
-                    onClick={() => {
-                      setActiveTab(item.id as any);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-3 rounded-xl font-medium text-xs flex items-center gap-3 transition-all ${
-                      activeTab === item.id ? 'bg-gradient-to-r from-purple-900/40 to-orange-900/40 text-orange-500 border border-orange-500/30 font-bold' : 'hover:bg-[#1c1c28] text-slate-400'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {item.label}
-                  </button>
-                );
-              })}
-
-              <div className="w-full h-[1px] bg-[#2a2a35] my-2"></div>
-
-              <button
-                onClick={() => {
-                  setActiveTab('generator-coach');
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-4 py-3 rounded-xl font-medium text-xs flex items-center gap-3 transition-all ${
-                  activeTab === 'generator-coach' ? 'bg-gradient-to-r from-purple-900/40 to-orange-900/40 text-orange-500 border border-orange-500/30 font-bold' : 'hover:bg-[#1c1c28] text-slate-400'
-                }`}
-              >
-                <User className="w-4 h-4" />
-                Generator Kartu Pelatih
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('generator-athlete');
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-4 py-3 rounded-xl font-medium text-xs flex items-center gap-3 transition-all ${
-                  activeTab === 'generator-athlete' ? 'bg-gradient-to-r from-purple-900/40 to-orange-900/40 text-orange-500 border border-orange-500/30 font-bold' : 'hover:bg-[#1c1c28] text-slate-400'
-                }`}
-              >
-                <Users className="w-4 h-4" />
-                Generator Kartu Atlet
-              </button>
+            <div className="flex items-center gap-3">
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </button>
+        </div>
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 md:px-8 py-8 relative">
+      </aside>
+
+      {/* Main Content wrapper */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden relative z-10 pb-20 lg:pb-0 split-bg">
+
+      {/* Mobile Header */}
+        <header className="bg-secondary/80 backdrop-blur-md relative z-40 w-full flex flex-col justify-center border-b border-theme lg:hidden shrink-0">
+            {academySettings.bannerUrl && (
+              <div className="absolute inset-0 z-0">
+                <img src={academySettings.bannerUrl} alt="Banner" className="w-full h-full object-cover opacity-30" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#13131a] to-transparent"></div>
+              </div>
+            )}
+            <div className="w-full flex items-center justify-between relative px-4 py-4 z-10">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-primary/50 rounded-xl flex items-center justify-center border border-theme overflow-hidden shrink-0 shadow-lg">
+                    {academySettings.logoUrl ? (
+                        <img src={academySettings.logoUrl} alt="Logo" className="w-full h-full object-contain p-1.5" />
+                    ) : (
+                        academySettings.logoIcon
+                    )}
+                    </div>
+                    <div className="flex flex-col justify-center">
+                    <h1 className="text-sm font-black uppercase tracking-tight text-primary leading-none">
+                        {academySettings.title}
+                    </h1>
+                    <h2 className="text-[10px] font-bold uppercase tracking-widest text-blue-500 mt-1">
+                        {academySettings.subtitle}
+                    </h2>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        {/* Main Scrolling Area */}
+        <div className="flex-1 w-full overflow-y-auto custom-scrollbar relative">
+          {academySettings.bannerUrl && activeTab === 'dashboard' && (
+             <div className="hidden lg:block w-full h-64 relative border-b border-theme shrink-0">
+                 <img src={academySettings.bannerUrl} alt="Banner" className="w-full h-full object-cover opacity-40" />
+                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A10] to-transparent"></div>
+             </div>
+          )}
+          <main className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 relative min-h-full">
         <AnimatePresence mode="wait">
           
           {/* TAB 1: DASHBOARD OVERVIEW */}
@@ -562,176 +551,68 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.3 }}
-              className="space-y-6 max-w-lg mx-auto md:max-w-none"
+              className="space-y-6 max-w-lg mx-auto md:max-w-none pb-20"
               id="dashboard-container"
             >
-              
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div className="lg:col-span-8 space-y-6">
-                  {/* Hero Banner for Dashboard */}
-                  <div className="bg-gradient-to-r from-[#1c142c] to-[#0B0A10] border border-[#2a2a35] rounded-3xl p-6 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-purple-900/10">
-                    <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-orange-500/10 to-transparent pointer-events-none" />
-                    
-                    <div className="space-y-3 relative z-10 max-w-md text-center md:text-left">
-                      <div className="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/30 text-orange-500 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        Portal Manajemen Atlet
-                      </div>
-                      <h2 className="text-xl md:text-2xl font-black text-white leading-tight uppercase font-display">
-                        Selamat Datang, <br />
-                        <span className="text-orange-500">Coach Andi</span>
-                      </h2>
-                      <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                        Pantau grafik performa murid, presensi latihan harian, dan evaluasi skill di portal terpadu Dragon Basketball.
-                      </p>
+              <div className="relative z-10 space-y-8">
+                {/* Header Greeting */}
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-3xl md:text-4xl font-black text-primary leading-tight font-display tracking-tight">
+                      Hi, <span className="text-blue-500">Coach Andi!</span>
+                    </h2>
+                    <p className="text-sm text-secondary font-medium mt-1">
+                      Let's learn something new today!
+                    </p>
+                  </div>
+                  
+                                    {/* Search Bar */}
+                  <div className="w-full md:w-auto relative group">
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                      <Search className="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                     </div>
+                    <input 
+                      type="text" 
+                      placeholder="Search for tools..." 
+                      className="w-full md:w-72 pl-11 pr-4 py-3.5 rounded-full bg-white/90 dark:bg-[#1a1a24]/90 backdrop-blur-xl border border-white/40 dark:border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium text-slate-800 dark:text-white placeholder-slate-400 transition-all"
+                    />
                   </div>
+                </div>
 
-                  {/* Quick Navigation Cards */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {/* Categories Title */}
+                <div className="flex justify-between items-end">
+                  <h3 className="text-lg font-bold text-primary tracking-wide">Categories</h3>
+                  <button className="text-xs font-bold text-blue-500 hover:text-blue-600 transition-colors">View All</button>
+                </div>
+
+                                {/* Grid Categories */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                  {[
+                    { id: 'generator-student', label: 'Form Siswa Baru', subtitle: 'Pendaftaran', icon: <UserPlus className="w-7 h-7 text-white" />, color: 'from-[#ff8f71] to-[#ff3e5e]' },
+                    { id: 'stats', label: 'Data Siswa & Kelas', subtitle: 'ID Card Siswa', icon: <Users className="w-7 h-7 text-white" />, color: 'from-[#71a0ff] to-[#3e68ff]' },
+                    { id: 'schedule', label: 'Jadwal Latihan', subtitle: 'Kalender Sesi', icon: <Calendar className="w-7 h-7 text-white" />, color: 'from-[#42e8e0] to-[#0ea5e9]' },
+                    { id: 'tutorials', label: 'Materi', subtitle: 'Video & Artikel', icon: <BookOpen className="w-7 h-7 text-white" />, color: 'from-[#c084fc] to-[#9333ea]' },
+                    { id: 'attendance', label: 'Penilaian & Absensi', subtitle: 'Kehadiran', icon: <FileSpreadsheet className="w-7 h-7 text-white" />, color: 'from-[#ffb071] to-[#ff713e]' },
+                    { id: 'generator-athlete', label: 'Form & Kartu Atlet', subtitle: 'Manajemen Atlet', icon: <Award className="w-7 h-7 text-white" />, color: 'from-[#38bdf8] to-[#0284c7]' },
+                    { id: 'report', label: 'Raport', subtitle: 'Evaluasi', icon: <Trophy className="w-7 h-7 text-white" />, color: 'from-[#fbbf24] to-[#d97706]' },
+                    { id: 'generator-coach', label: 'Generator Coach', subtitle: 'ID Card Coach', icon: <Shield className="w-7 h-7 text-white" />, color: 'from-[#f43f5e] to-[#be123c]' },
+                    { id: 'coaches', label: 'Daftar Coach', subtitle: 'Direktori', icon: <User className="w-7 h-7 text-white" />, color: 'from-[#818cf8] to-[#4f46e5]' },
+                    { id: 'notifications', label: 'Notifikasi', subtitle: 'Pesan Baru', icon: <Bell className="w-7 h-7 text-white" />, color: 'from-[#a78bfa] to-[#7c3aed]' }
+                  ].map((cat, idx) => (
                     <button
-                      onClick={() => setActiveTab('stats')}
-                      className="bg-[#13131a] hover:bg-[#1c1c28] border border-[#2a2a35] hover:border-orange-500/50 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 transition-all group shadow-lg"
+                      key={cat.id}
+                      onClick={() => setActiveTab(cat.id as any)}
+                      className="bg-white/90 dark:bg-[#1a1a24]/90 backdrop-blur-xl p-5 md:p-6 rounded-3xl flex flex-col items-start gap-4 group hover:shadow-2xl transition-all duration-300 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-white/40 dark:border-white/5"
                     >
-                      <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-500 group-hover:bg-purple-500 group-hover:text-white flex items-center justify-center transition-colors">
-                        <Users className="w-6 h-6" />
+                      <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center shadow-lg transform group-hover:-translate-y-2 transition-transform duration-300`}>
+                        {cat.icon}
                       </div>
-                      <span className="text-[10px] font-bold text-slate-300 group-hover:text-white uppercase tracking-widest text-center">Data Atlet</span>
+                      <div className="text-left space-y-0.5">
+                        <span className="text-sm md:text-base font-bold text-slate-800 dark:text-white block leading-tight">{cat.label}</span>
+                        <span className="text-[11px] md:text-xs text-slate-500 font-medium">{cat.subtitle}</span>
+                      </div>
                     </button>
-                    
-                    <button
-                      onClick={() => setActiveTab('attendance')}
-                      className="bg-[#13131a] hover:bg-[#1c1c28] border border-[#2a2a35] hover:border-emerald-500/50 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 transition-all group shadow-lg"
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white flex items-center justify-center transition-colors">
-                        <Calendar className="w-6 h-6" />
-                      </div>
-                      <span className="text-[10px] font-bold text-slate-300 group-hover:text-white uppercase tracking-widest text-center">Presensi Harian</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => setActiveTab('report')}
-                      className="bg-[#13131a] hover:bg-[#1c1c28] border border-[#2a2a35] hover:border-blue-500/50 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 transition-all group shadow-lg"
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 group-hover:bg-blue-500 group-hover:text-white flex items-center justify-center transition-colors">
-                        <FileSpreadsheet className="w-6 h-6" />
-                      </div>
-                      <span className="text-[10px] font-bold text-slate-300 group-hover:text-white uppercase tracking-widest text-center">Rapor Evaluasi</span>
-                    </button>
-                  </div>
-
-              {/* Ringkasan Skuad Widget */}
-              <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
-                <div className="flex items-center gap-2 mb-4 relative z-10">
-                  <Activity className="w-5 h-5 text-purple-500" />
-                  <h3 className="text-sm font-bold text-white tracking-widest uppercase">RINGKASAN SKUAD</h3>
-                </div>
-                
-                <div className="flex divide-x divide-[#2a2a35] mb-6 relative z-10">
-                  <div className="flex-1 pr-4">
-                    <span className="text-[10px] text-slate-400 block mb-1">Total Atlet</span>
-                    <span className="text-2xl font-black text-white">{students.length} <span className="text-sm font-medium text-slate-400">Murid</span></span>
-                  </div>
-                  <div className="flex-1 pl-4">
-                    <span className="text-[10px] text-slate-400 block mb-1">Rata-rata Skor</span>
-                    <span className="text-2xl font-black text-orange-500">{globalMetrics.avgScore} <span className="text-sm font-medium text-slate-400">/ 100</span></span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setActiveTab('stats')}
-                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-900/40 to-orange-900/40 border border-[#2a2a35] text-slate-300 hover:text-white text-[11px] font-bold tracking-widest uppercase flex items-center justify-center gap-2 transition-all hover:bg-gradient-to-r hover:from-purple-900/60 hover:to-orange-900/60"
-                >
-                  <Users className="w-4 h-4" />
-                  LIHAT DETAIL SKUAD
-                  <ArrowUpRight className="w-4 h-4" />
-                </button>
-                
-                {/* Background glow graphic */}
-                <div className="absolute -right-10 -top-10 opacity-10 pointer-events-none select-none">
-                   <div className="w-48 h-48 rounded-full bg-gradient-to-br from-purple-700 to-orange-500 blur-3xl"></div>
-                </div>
-              </div>
-
-              {/* Evaluasi Terbaru List */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center px-1">
-                  <div className="flex items-center gap-2">
-                    <FileSpreadsheet className="w-5 h-5 text-orange-500" />
-                    <h3 className="text-sm font-bold text-white tracking-widest uppercase">EVALUASI TERBARU</h3>
-                  </div>
-                  <button onClick={() => setActiveTab('report')} className="text-[11px] text-orange-500 hover:text-orange-400 font-medium flex items-center">
-                    Lihat Semua <ArrowUpRight className="w-3 h-3 ml-1" />
-                  </button>
-                </div>
-
-                <div className="space-y-3">
-                  {students.slice(0, 3).map((student, idx) => {
-                    const skillsArr = Object.values(student.skills) as number[];
-                    const avg = Math.round(skillsArr.reduce((a, b) => a + b, 0) / 6);
-                    const isOrange = idx % 2 === 0;
-                    return (
-                      <div key={student.id} className={`bg-[#13131a] border-l-4 ${isOrange ? 'border-l-orange-500' : 'border-l-blue-500'} border-t border-r border-b border-[#2a2a35] rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden`}>
-                        <div className="flex justify-between items-start">
-                          <div className="flex gap-3 items-center">
-                            <div className={`w-10 h-10 rounded-full border border-[#2a2a35] flex items-center justify-center font-bold text-sm ${isOrange ? 'text-orange-500' : 'text-blue-500'} bg-[#0B0A10]`}>
-                              {student.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-bold text-white text-sm">{student.name}</h4>
-                                <span className={`text-[9px] px-1.5 py-0.5 rounded border ${isOrange ? 'border-orange-500/30 text-orange-500 bg-orange-500/10' : 'border-blue-500/30 text-blue-500 bg-blue-500/10'} font-medium`}>
-                                  {student.position}
-                                </span>
-                              </div>
-                              <p className="text-[10px] text-slate-400 mt-0.5">
-                                {student.classLevel} • {student.age} Tahun • {student.height} cm • {student.weight} kg
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-[10px] text-slate-400 block font-medium">Skor</span>
-                            <span className={`text-xl font-black text-orange-500`}>{avg}</span>
-                          </div>
-                        </div>
-
-                        <div className="text-[11px] text-slate-300 flex items-start gap-1.5 bg-[#0B0A10]/50 p-2 rounded-lg border border-[#2a2a35]/50">
-                          <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                          <p>{student.notes || 'Catatan performa mingguan atlet terpantau stabil.'}</p>
-                        </div>
-
-                        <div className="grid grid-cols-5 gap-1 pt-1 pb-2">
-                           <div className="flex gap-1 items-center justify-center"><span className="text-[10px] text-slate-500">Dribbling</span> <span className="text-[10px] font-bold text-orange-500">{student.skills.dribbling}</span></div>
-                           <div className="flex gap-1 items-center justify-center"><span className="text-[10px] text-slate-500">Shooting</span> <span className="text-[10px] font-bold text-orange-500">{student.skills.shooting}</span></div>
-                           <div className="flex gap-1 items-center justify-center"><span className="text-[10px] text-slate-500">Defense</span> <span className="text-[10px] font-bold text-purple-500">{student.skills.defense}</span></div>
-                           <div className="flex gap-1 items-center justify-center"><span className="text-[10px] text-slate-500">Physical</span> <span className="text-[10px] font-bold text-emerald-500">{student.skills.physical}</span></div>
-                           <div className="flex gap-1 items-center justify-center"><span className="text-[10px] text-slate-500">Passing</span> <span className="text-[10px] font-bold text-blue-500">{student.skills.passing}</span></div>
-                        </div>
-
-                        <div className="flex justify-between items-center text-[10px] text-slate-400">
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3 h-3" />
-                            <span>12 Mei 2024</span>
-                          </div>
-                          <button onClick={() => { setSelectedStudentId(student.id); setActiveTab('stats'); }} className="text-emerald-500 hover:text-emerald-400 font-medium flex items-center px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 transition-all">
-                            Lihat Detail <ArrowUpRight className="w-3 h-3 ml-1" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <button
-                  onClick={() => setActiveTab('stats')}
-                  className="w-full py-4 mt-2 rounded-2xl bg-[#13131a] border border-[#2a2a35] text-slate-300 hover:text-white text-[11px] font-bold tracking-widest uppercase flex items-center justify-center gap-2 transition-all hover:bg-[#1c1c28]"
-                >
-                  <Users className="w-4 h-4 text-purple-500" />
-                  LIHAT SEMUA EVALUASI
-                  <ArrowUpRight className="w-4 h-4" />
-                </button>
-              </div>
-
+                  ))}
                 </div>
               </div>
             </motion.div>
@@ -768,6 +649,27 @@ export default function App() {
                 onUpdateStudent={handleUpdateStudent}
                 onAddStudent={handleAddStudent}
                 onDeleteStudent={handleDeleteStudent}
+              onSaveCard={(card) => {
+                setSavedCards([...savedCards, card]);
+              }}
+              savedCards={savedCards}
+              onImportCard={(studentId, cardId) => {
+                const card = savedCards.find(c => c.id === cardId);
+                if (card) {
+                  // Update student info with imported card info
+                  handleUpdateStudent(studentId, {
+                    name: card.name,
+                    position: card.position as any,
+                    height: card.height,
+                    weight: card.weight,
+                    avatar: card.avatar,
+                    fullBodyPhoto: card.fullBodyPhoto,
+                    parentName: card.parentName,
+                    parentPhone: card.parentPhone
+                  });
+                  alert(`Kartu "${card.name}" berhasil diimport!`);
+                }
+              }}
               />
             </motion.div>
           )}
@@ -782,13 +684,13 @@ export default function App() {
               transition={{ duration: 0.3 }}
             >
               {/* Quick selector of student top bar inside reports */}
-              <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-5 shadow-lg mb-6 flex flex-wrap items-center justify-between gap-4">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">Atlet Terpilih:</span>
+              <div className="neu-flat p-5 shadow-lg mb-6 flex flex-wrap items-center justify-between gap-4">
+                <span className="text-[11px] font-bold text-secondary uppercase tracking-widest block">Atlet Terpilih:</span>
                 <select
                   id="select-report-student"
                   value={selectedStudentId}
                   onChange={(e) => setSelectedStudentId(e.target.value)}
-                  className="text-xs font-bold border border-[#2a2a35] bg-[#1c1c28] text-white rounded-xl py-2 px-4 cursor-pointer outline-none focus:border-orange-500 transition-colors uppercase tracking-wider"
+                  className="text-xs font-bold border border-theme neu-pressed text-primary rounded-xl py-2 px-4 cursor-pointer outline-none focus:border-blue-500 transition-colors uppercase tracking-wider"
                 >
                   {students.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -802,6 +704,7 @@ export default function App() {
                 students={students}
                 selectedStudentId={selectedStudentId}
                 onSendNotification={handleSendNotification}
+                savedCards={savedCards}
               />
             </motion.div>
           )}
@@ -871,35 +774,56 @@ export default function App() {
               transition={{ duration: 0.3 }}
             >
               <div className="max-w-7xl mx-auto space-y-6">
-                <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-6 md:p-8 shadow-lg">
+                <div className="neu-flat p-6 md:p-8 shadow-lg">
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-black text-white uppercase tracking-wider flex items-center gap-2"><User className="w-6 h-6 text-orange-500" /> Daftar Pelatih</h2>
-                    <a href="https://creative-id-hub.vercel.app/list" target="_blank" rel="noopener noreferrer" className="bg-gradient-to-r from-purple-600 to-orange-500 hover:opacity-90 text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 transition-opacity text-xs uppercase tracking-widest shadow-lg">
-                      <Download className="w-4 h-4" /> Import Kartu
-                    </a>
+                    <h2 className="text-xl font-black text-primary uppercase tracking-wider flex items-center gap-2"><User className="w-6 h-6 text-blue-500" /> Daftar Pelatih</h2>
+                    
+                    <div className="relative group">
+                      <button className="bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 text-primary font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 transition-opacity text-xs uppercase tracking-widest shadow-lg cursor-pointer">
+                        <Download className="w-4 h-4" /> Import Kartu
+                      </button>
+                      
+                      <div className="absolute right-0 top-full mt-2 w-56 neu-pressed border border-theme rounded-xl shadow-2xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                        <div className="max-h-64 overflow-y-auto">
+                          {coaches.filter(c => !importedCoachIds.includes(c.id)).map(coach => (
+                            <button
+                              key={coach.id}
+                              onClick={() => setImportedCoachIds([...importedCoachIds, coach.id])}
+                              className="w-full text-left px-4 py-3 text-xs text-slate-300 hover:bg-secondary border-theme hover:text-primary transition-colors border-b border-theme last:border-0 flex items-center gap-3"
+                            >
+                              <span className="text-lg">{coach.avatar || '👤'}</span>
+                              <span className="truncate">{coach.name}</span>
+                            </button>
+                          ))}
+                          {coaches.filter(c => !importedCoachIds.includes(c.id)).length === 0 && (
+                            <div className="px-4 py-4 text-xs text-secondary text-center">Semua coach sudah diimport.</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                    {coaches.map(coach => (
-                      <div key={coach.id} className="relative group rounded-3xl overflow-hidden border border-[#2a2a35] bg-[#1c1c28] aspect-[900/550] shadow-xl">
+                    {coaches.filter(c => importedCoachIds.includes(c.id)).map(coach => (
+                      <div key={coach.id} className="relative group rounded-3xl overflow-hidden border border-theme neu-pressed aspect-[900/550] shadow-xl">
                         {coach.avatar?.startsWith('http') || coach.avatar?.startsWith('data:') ? (
                           <img src={coach.avatar} alt={coach.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#1c1c28] to-[#13131a]">
                             <div className="text-5xl mb-4">{coach.avatar || '👤'}</div>
-                            <h3 className="text-white font-bold text-xl">{coach.name}</h3>
-                            <p className="text-orange-500 text-sm font-bold uppercase tracking-widest mt-2">{coach.role}</p>
+                            <h3 className="text-primary font-bold text-xl">{coach.name}</h3>
+                            <p className="text-blue-500 text-sm font-bold uppercase tracking-widest mt-2">{coach.role}</p>
                           </div>
                         )}
                         
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 backdrop-blur-sm z-10">
-                          <a href={`https://creative-id-hub.vercel.app/?id=${coach.id}`} target="_blank" rel="noopener noreferrer" className="bg-blue-500 hover:bg-blue-600 text-white p-3.5 rounded-2xl transition-colors shadow-lg" title="Edit Kartu">
+                          <a href={`https://creative-id-hub.vercel.app/?id=${coach.id}`} target="_blank" rel="noopener noreferrer" className="neu-button-accent p-3.5 rounded-2xl transition-colors shadow-lg" title="Edit Kartu">
                             <Edit3 className="w-6 h-6" />
                           </a>
                           <button onClick={() => {
-                            if (confirm(`Hapus kartu pelatih ${coach.name}?`)) {
-                              deleteCoachFromFirebase(coach.id);
+                            if (confirm(`Hapus kartu pelatih ${coach.name} dari halaman ini?`)) {
+                              setImportedCoachIds(importedCoachIds.filter(id => id !== coach.id));
                             }
-                          }} className="bg-red-500 hover:bg-red-600 text-white p-3.5 rounded-2xl transition-colors shadow-lg" title="Hapus Kartu">
+                          }} className="bg-red-500 hover:bg-red-600 text-primary p-3.5 rounded-2xl transition-colors shadow-lg" title="Hapus Kartu">
                             <Trash2 className="w-6 h-6" />
                           </button>
                         </div>
@@ -923,19 +847,26 @@ export default function App() {
               className="h-[calc(100vh-160px)] min-h-[600px] w-full"
             >
               <div className="max-w-7xl mx-auto h-full space-y-6">
-                <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-2 h-full shadow-lg overflow-hidden flex flex-col">
-                  <div className="px-4 py-3 border-b border-[#2a2a35] flex items-center gap-2 shrink-0">
-                    <User className="w-5 h-5 text-orange-500" /> 
-                    <h2 className="text-lg font-black text-white uppercase tracking-wider">Generator Kartu Pelatih</h2>
-                  </div>
-                  <div className="flex-1 w-full bg-white relative rounded-b-2xl overflow-hidden">
-                    <iframe 
-                      src="https://creative-id-hub.vercel.app/" 
-                      className="absolute inset-0 w-full h-full border-0"
-                      title="Generator Kartu Pelatih"
-                      allow="camera; microphone; fullscreen; display-capture; picture-in-picture; clipboard-write; clipboard-read"
-                    ></iframe>
-                  </div>
+                <div className="neu-flat h-full shadow-lg overflow-hidden flex flex-col">
+                  <CardGenerator type="coach" title="Kartu Pelatih" />
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB: GENERATOR STUDENT */}
+          {activeTab === 'generator-student' && (
+            <motion.div
+              key="generator-student"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="h-[calc(100vh-160px)] min-h-[600px] w-full"
+            >
+              <div className="max-w-7xl mx-auto h-full space-y-6">
+                <div className="neu-flat h-full shadow-lg overflow-hidden flex flex-col">
+                  <CardGenerator type="student" title="Kartu Siswa" />
                 </div>
               </div>
             </motion.div>
@@ -952,19 +883,8 @@ export default function App() {
               className="h-[calc(100vh-160px)] min-h-[600px] w-full"
             >
               <div className="max-w-7xl mx-auto h-full space-y-6">
-                <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-2 h-full shadow-lg overflow-hidden flex flex-col">
-                  <div className="px-4 py-3 border-b border-[#2a2a35] flex items-center gap-2 shrink-0">
-                    <Users className="w-5 h-5 text-orange-500" /> 
-                    <h2 className="text-lg font-black text-white uppercase tracking-wider">Generator Kartu Atlet</h2>
-                  </div>
-                  <div className="flex-1 w-full bg-white relative rounded-b-2xl overflow-hidden">
-                    <iframe 
-                      src="https://generatoratletcard.vercel.app/" 
-                      className="absolute inset-0 w-full h-full border-0"
-                      title="Generator Kartu Atlet"
-                      allow="camera; microphone; fullscreen; display-capture; picture-in-picture; clipboard-write; clipboard-read"
-                    ></iframe>
-                  </div>
+                <div className="neu-flat h-full shadow-lg overflow-hidden flex flex-col">
+                  <CardGenerator type="student" title="Kartu Atlet" />
                 </div>
               </div>
             </motion.div>
@@ -980,16 +900,16 @@ export default function App() {
               transition={{ duration: 0.3 }}
             >
               <div className="max-w-2xl mx-auto space-y-6">
-                <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-6 md:p-8 shadow-lg relative overflow-hidden">
+                <div className="neu-flat p-6 md:p-8 shadow-lg relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                    <Settings className="w-32 h-32 text-orange-500 transform rotate-12" />
+                    <Settings className="w-32 h-32 text-blue-500 transform rotate-12" />
                   </div>
                   
-                  <h4 className="text-sm font-black text-white mb-2 flex items-center gap-2 tracking-wide uppercase">
-                    <Settings className="w-5 h-5 text-orange-500" />
+                  <h4 className="text-sm font-black text-primary mb-2 flex items-center gap-2 tracking-wide uppercase">
+                    <Settings className="w-5 h-5 text-blue-500" />
                     Pengaturan Akademi
                   </h4>
-                  <p className="text-[11px] text-slate-400 mb-8 leading-relaxed font-medium">
+                  <p className="text-[11px] text-secondary mb-8 leading-relaxed font-medium">
                     Sesuaikan identitas visual dan informasi akademi yang akan ditampilkan pada header dan rapor siswa.
                   </p>
 
@@ -997,21 +917,21 @@ export default function App() {
                     <div className="flex flex-col md:flex-row gap-6">
                       <div className="flex-1 space-y-4">
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Ikon Logo (Emoji)</label>
+                          <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Ikon Logo (Emoji)</label>
                           <input
                             type="text"
                             maxLength={2}
                             value={academySettings.logoIcon}
                             onChange={(e) => setAcademySettings({...academySettings, logoIcon: e.target.value})}
-                            className="w-20 text-center text-xl p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors"
+                            className="w-20 text-center text-xl p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 transition-colors"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Upload Logo Gambar</label>
+                          <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Upload Logo Gambar</label>
                           <div className="flex items-center gap-3">
-                            <label className="flex-1 bg-[#1c1c28] border border-[#2a2a35] hover:border-orange-500 hover:bg-[#1c1c28]/80 text-white rounded-xl p-3 cursor-pointer transition-colors flex items-center justify-center gap-2">
-                              <ImageIcon className="w-4 h-4 text-orange-500" />
+                            <label className="flex-1 neu-pressed border border-theme hover:border-blue-500 hover:neu-flat-sm/80 text-primary rounded-xl p-3 cursor-pointer transition-colors flex items-center justify-center gap-2">
+                              <ImageIcon className="w-4 h-4 text-blue-500" />
                               <span className="text-xs font-bold">Pilih File Logo</span>
                               <input 
                                 type="file" 
@@ -1041,10 +961,10 @@ export default function App() {
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Upload Background Header</label>
+                          <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Upload Background Header</label>
                           <div className="flex items-center gap-3">
-                            <label className="flex-1 bg-[#1c1c28] border border-[#2a2a35] hover:border-orange-500 hover:bg-[#1c1c28]/80 text-white rounded-xl p-3 cursor-pointer transition-colors flex items-center justify-center gap-2">
-                              <ImageIcon className="w-4 h-4 text-orange-500" />
+                            <label className="flex-1 neu-pressed border border-theme hover:border-blue-500 hover:neu-flat-sm/80 text-primary rounded-xl p-3 cursor-pointer transition-colors flex items-center justify-center gap-2">
+                              <ImageIcon className="w-4 h-4 text-blue-500" />
                               <span className="text-xs font-bold">Pilih Background</span>
                               <input 
                                 type="file" 
@@ -1076,43 +996,43 @@ export default function App() {
 
                       <div className="flex-1 space-y-4">
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Judul Utama</label>
+                          <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Judul Utama</label>
                           <input
                             type="text"
                             value={academySettings.title}
                             onChange={(e) => setAcademySettings({...academySettings, title: e.target.value})}
-                            className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors"
+                            className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 transition-colors"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Sub Judul</label>
+                          <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Sub Judul</label>
                           <input
                             type="text"
                             value={academySettings.subtitle}
                             onChange={(e) => setAcademySettings({...academySettings, subtitle: e.target.value})}
-                            className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors"
+                            className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 transition-colors"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Lokasi</label>
+                          <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Lokasi</label>
                           <input
                             type="text"
                             value={academySettings.location}
                             onChange={(e) => setAcademySettings({...academySettings, location: e.target.value})}
-                            className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors"
+                            className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 transition-colors"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Nomor WhatsApp Notifikasi (Format: 628...)</label>
+                          <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Nomor WhatsApp Notifikasi (Format: 628...)</label>
                           <input
                             type="text"
                             value={academySettings.whatsappNumber || ''}
                             onChange={(e) => setAcademySettings({...academySettings, whatsappNumber: e.target.value})}
                             placeholder="Contoh: 6281234567890"
-                            className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors"
+                            className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 transition-colors"
                           />
                         </div>
                       </div>
@@ -1123,73 +1043,104 @@ export default function App() {
             </motion.div>
           )}
         </AnimatePresence>
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-[#0B0A10] border-t border-[#2a2a35] text-slate-400 py-8 relative z-20 pb-32 lg:pb-8">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col items-center justify-center gap-4 text-center">
-          <div className="space-y-1">
-            <span className="text-white text-xs font-black uppercase tracking-wider block font-display">BASKETBALL ACADEMY PORTAL</span>
-            <p className="text-[10px] text-slate-500 font-medium leading-relaxed max-w-md mx-auto">
-              Materi bola basket terpadu, presensi digital modern, parameter skill 3D real-time, & gerbang komunikasi wali murid.<br/>
-              Sistem bermitra FIBA Youth Coach Assistant & Authenticity Lab.
-            </p>
-          </div>
-          <div className="text-[10px] text-slate-500 font-medium space-y-1">
-            <span>© 2026 Basketball Academy. Seluruh Hak Cipta Dilindungi.</span>
-            <div className="flex gap-2 justify-center text-orange-500 font-bold">
-              <a href="#privacy" className="hover:text-orange-400">Kebijakan Privasi</a>
-              <span>•</span>
-              <a href="#terms" className="hover:text-orange-400">Ketentuan Layanan</a>
-            </div>
-          </div>
+          </main>
         </div>
-      </footer>
+      </div>
+
+      {/* Mobile Drawer Navigation */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: -300 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -300 }}
+            className="lg:hidden fixed inset-y-0 left-0 w-72 bg-secondary border-r border-theme text-primary z-50 flex flex-col"
+          >
+            <div className="p-4 border-b border-theme flex justify-between items-center">
+               <span className="font-bold uppercase tracking-widest text-sm text-secondary">Menu</span>
+               <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-secondary border-theme rounded-xl text-secondary">
+                  <X className="w-5 h-5" />
+               </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                <div>
+                  <h3 className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-3 px-2">Menu Utama</h3>
+                  <div className="space-y-1">
+                    <SidebarButton id="dashboard" icon={<Home className="w-4 h-4" />} label="Beranda" />
+                    <SidebarButton id="stats" icon={<Users className="w-4 h-4" />} label="Data Atlet" />
+                    <SidebarButton id="attendance" icon={<FileSpreadsheet className="w-4 h-4" />} label="Absensi" />
+                    <SidebarButton id="schedule" icon={<Calendar className="w-4 h-4" />} label="Jadwal" />
+                    <SidebarButton id="report" icon={<Trophy className="w-4 h-4" />} label="Rapor" />
+                    <SidebarButton id="tutorials" icon={<Video className="w-4 h-4" />} label="Teknik" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-3 px-2">Pelatih & Tools</h3>
+                  <div className="space-y-1">
+                    <SidebarButton id="coaches" icon={<User className="w-4 h-4" />} label="Data Pelatih" />
+                    <SidebarButton id="notifications" icon={<MessageSquare className="w-4 h-4" />} label="Notifikasi" badge={notifications.length} />
+                    <SidebarButton id="generator-student" icon={<Image className="w-4 h-4" />} label="Gen. Kartu Siswa" />
+                    <SidebarButton id="generator-athlete" icon={<ImageIcon className="w-4 h-4" />} label="Gen. Kartu Atlet" />
+                    <SidebarButton id="generator-coach" icon={<User className="w-4 h-4" />} label="Gen. Kartu Pelatih" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-3 px-2">Sistem</h3>
+                  <div className="space-y-1">
+                    <SidebarButton id="settings" icon={<Settings className="w-4 h-4" />} label="Pengaturan" />
+                  </div>
+                </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {isMobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={() => setIsMobileMenuOpen(false)}></div>
+      )}
 
       {/* Bottom Navigation (Mobile Only) */}
-      <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-[#13131a]/95 backdrop-blur-md border border-[#2a2a35] rounded-2xl flex justify-around items-center py-2 px-2 z-50 shadow-2xl">
+      <div className="lg:hidden fixed bottom-4 left-4 right-4 neu-flat flex justify-around items-center py-2 px-2 z-50 shadow-2xl">
         <button
-          onClick={() => setActiveTab('dashboard')}
-          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'dashboard' ? 'text-orange-500' : 'text-slate-500'}`}
+          onClick={() => { setActiveTab('dashboard'); setIsMobileMenuOpen(false); }}
+          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'dashboard' ? 'text-blue-500' : 'text-secondary'}`}
         >
           <Home className="w-5 h-5" />
           <span className="text-[9px] font-bold">Beranda</span>
         </button>
         <button
-          onClick={() => setActiveTab('stats')}
-          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'stats' ? 'text-orange-500' : 'text-slate-500'}`}
+          onClick={() => { setActiveTab('stats'); setIsMobileMenuOpen(false); }}
+          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'stats' ? 'text-blue-500' : 'text-secondary'}`}
         >
           <Users className="w-5 h-5" />
           <span className="text-[9px] font-bold">Atlet</span>
         </button>
         
-        {/* Center Add Button */}
+        {/* Menu Toggle Button in Center */}
         <div className="relative -top-5 flex flex-col items-center">
           <button 
-            onClick={() => { setActiveTab('stats'); setTimeout(() => window.dispatchEvent(new CustomEvent('openAddStudentModal')), 150) }}
-            className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-orange-500 flex items-center justify-center border-4 border-[#0B0A10] text-white shadow-[0_0_15px_rgba(249,115,22,0.4)]"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="w-14 h-14 rounded-full bg-gradient-to-br from-[#1c1c28] to-[#13131a] flex items-center justify-center border-4 border-[#0B0A10] text-blue-500 shadow-xl hover:text-blue-400"
           >
-            <Plus className="w-6 h-6" />
+            <Menu className="w-6 h-6" />
           </button>
-          <span className="text-[9px] text-slate-400 font-bold absolute -bottom-4 w-20 text-center">Tambah Siswa</span>
+          <span className="text-[9px] text-secondary font-bold absolute -bottom-4 w-20 text-center">Menu</span>
         </div>
 
         <button
-          onClick={() => setActiveTab('report')}
-          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'report' ? 'text-orange-500' : 'text-slate-500'}`}
+          onClick={() => { setActiveTab('report'); setIsMobileMenuOpen(false); }}
+          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'report' ? 'text-blue-500' : 'text-secondary'}`}
         >
           <Trophy className="w-5 h-5" />
-          <span className="text-[9px] font-bold">Ranking</span>
+          <span className="text-[9px] font-bold">Rapor</span>
         </button>
         <button
-          onClick={() => setActiveTab('coaches')}
-          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'coaches' ? 'text-orange-500' : 'text-slate-500'}`}
+          onClick={() => { setActiveTab('attendance'); setIsMobileMenuOpen(false); }}
+          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'attendance' ? 'text-blue-500' : 'text-secondary'}`}
         >
-          <User className="w-5 h-5" />
-          <span className="text-[9px] font-bold">Pelatih</span>
+          <FileSpreadsheet className="w-5 h-5" />
+          <span className="text-[9px] font-bold">Absensi</span>
         </button>
       </div>
-
     </div>
   );
 }

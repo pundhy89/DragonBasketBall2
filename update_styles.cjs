@@ -1,4 +1,6 @@
+const fs = require('fs');
 
+const css = `
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&family=Outfit:wght@500;700;900&display=swap');
 @import "tailwindcss";
 
@@ -19,10 +21,11 @@
     
     --border-color: #d1d5db;
     
-    --neu-shadow: 8px 8px 16px rgba(163, 177, 198, 0.6), -8px -8px 16px rgba(255, 255, 255, 0.8);
-    --neu-shadow-sm: 4px 4px 8px rgba(163, 177, 198, 0.5), -4px -4px 8px rgba(255, 255, 255, 0.7);
-    --neu-inner: inset 4px 4px 8px rgba(163, 177, 198, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.7);
-    --neu-shadow-active: inset 6px 6px 12px rgba(163, 177, 198, 0.6), inset -6px -6px 12px rgba(255, 255, 255, 0.8);
+    --neu-shadow: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
+    --neu-shadow-sm: 4px 4px 8px #d1d9e6, -4px -4px 8px #ffffff;
+    --neu-inner: inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff;
+    
+    --neu-shadow-active: inset 6px 6px 12px #d1d9e6, inset -6px -6px 12px #ffffff;
   }
 
   .dark {
@@ -35,10 +38,11 @@
     
     --border-color: #334155;
     
-    --neu-shadow: 8px 8px 16px rgba(0, 0, 0, 0.4), -8px -8px 16px rgba(255, 255, 255, 0.05);
-    --neu-shadow-sm: 4px 4px 8px rgba(0, 0, 0, 0.3), -4px -4px 8px rgba(255, 255, 255, 0.05);
-    --neu-inner: inset 4px 4px 8px rgba(0, 0, 0, 0.3), inset -4px -4px 8px rgba(255, 255, 255, 0.05);
-    --neu-shadow-active: inset 6px 6px 12px rgba(0, 0, 0, 0.4), inset -6px -6px 12px rgba(255, 255, 255, 0.05);
+    --neu-shadow: 8px 8px 16px #16171b, -8px -8px 16px #26262d;
+    --neu-shadow-sm: 4px 4px 8px #16171b, -4px -4px 8px #26262d;
+    --neu-inner: inset 4px 4px 8px #16171b, inset -4px -4px 8px #26262d;
+    
+    --neu-shadow-active: inset 6px 6px 12px #16171b, inset -6px -6px 12px #26262d;
   }
 }
 
@@ -51,19 +55,16 @@ body {
 /* Custom classes for Neumorphism */
 @layer utilities {
   .neu-flat {
-    color: var(--text-primary);
     background-color: var(--bg-secondary);
     box-shadow: var(--neu-shadow);
     border-radius: 1.5rem;
   }
   .neu-flat-sm {
-    color: var(--text-primary);
     background-color: var(--bg-secondary);
     box-shadow: var(--neu-shadow-sm);
     border-radius: 1rem;
   }
   .neu-pressed {
-    color: var(--text-primary);
     background-color: var(--bg-secondary);
     box-shadow: var(--neu-shadow-active);
     border-radius: 1rem;
@@ -96,11 +97,7 @@ body {
   }
 
   .split-bg {
-    background: linear-gradient(to right, var(--bg-primary) 35%, var(--bg-accent) 35%);
-  }
-  
-  .dark .split-bg {
-    background: linear-gradient(to right, var(--bg-primary) 35%, var(--bg-accent) 35%);
+    background: linear-gradient(to right, var(--bg-primary) 50%, var(--bg-accent) 50%);
   }
 
   .text-primary {
@@ -136,21 +133,7 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--bg-accent);
 }
+`;
 
-
-
-  .bg-soft-gradient {
-    background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
-  }
-  
-  .dark .bg-soft-gradient {
-    background: linear-gradient(135deg, #2D1B4E 0%, #1a365d 100%);
-  }
-
-  .split-bg {
-    background: transparent;
-  }
-  
-  .dark .split-bg {
-    background: transparent;
-  }
+fs.writeFileSync('src/index.css', css);
+console.log('Styles updated');

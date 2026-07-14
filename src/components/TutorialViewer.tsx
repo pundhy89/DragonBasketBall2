@@ -123,8 +123,8 @@ export default function TutorialViewer() {
       {/* LEFT: Tutorial List & Categories (4 columns) */}
       <div className="lg:col-span-4 flex flex-col gap-4">
         {/* Category Filter */}
-        <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-5 shadow-lg">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-3">Kategori Teknik</span>
+        <div className="neu-flat p-5 shadow-lg">
+          <span className="text-[10px] font-bold text-secondary uppercase tracking-widest block mb-3">Kategori Teknik</span>
           <div className="flex flex-wrap gap-2">
             {TUTORIAL_CATEGORIES.map((cat) => (
               <button
@@ -133,8 +133,8 @@ export default function TutorialViewer() {
                 onClick={() => setSelectedCategory(cat)}
                 className={`text-[11px] font-bold px-4 py-2 rounded-2xl border transition-all cursor-pointer ${
                   selectedCategory === cat
-                    ? 'bg-gradient-to-r from-purple-700 to-orange-500 text-white border-transparent shadow-md'
-                    : 'bg-[#1c1c28] text-slate-400 border-[#2a2a35] hover:text-white'
+                    ? 'bg-gradient-to-r from-purple-700 to-blue-500 text-primary border-transparent shadow-md'
+                    : 'neu-pressed text-secondary border-theme hover:text-primary'
                 }`}
               >
                 {cat}
@@ -144,8 +144,8 @@ export default function TutorialViewer() {
         </div>
 
         {/* Tutorial List Card */}
-        <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-5 shadow-lg flex-1 min-h-[350px]">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-4">Pustaka Video Tutorial</span>
+        <div className="neu-flat p-5 shadow-lg flex-1 min-h-[350px]">
+          <span className="text-[10px] font-bold text-secondary uppercase tracking-widest block mb-4">Pustaka Video Tutorial</span>
           
           <div className="flex flex-col gap-3">
             {filteredTutorials.map((tut) => {
@@ -157,19 +157,19 @@ export default function TutorialViewer() {
                   onClick={() => setSelectedTutorial(tut)}
                   className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-4 ${
                     isSelected
-                      ? 'bg-gradient-to-r from-purple-900/40 to-orange-900/40 border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.1)]'
-                      : 'bg-[#0B0A10] border-[#2a2a35] hover:border-slate-600'
+                      ? 'bg-gradient-to-r from-purple-900/40 to-blue-900/40 border-blue-500/50 shadow-[0_0_15px_rgba(249,115,22,0.1)]'
+                      : 'bg-primary border-theme hover:border-slate-600'
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 shadow-lg ${
-                    isSelected ? 'bg-orange-500 border-orange-400' : 'bg-[#1c1c28] border-[#2a2a35]'
+                    isSelected ? 'neu-button-accent border-blue-400' : 'neu-pressed border-theme'
                   }`}>
-                    <Play className={`w-5 h-5 ${isSelected ? 'text-white fill-white' : 'text-slate-400 fill-slate-400'}`} />
+                    <Play className={`w-5 h-5 ${isSelected ? 'text-primary fill-white' : 'text-secondary fill-slate-400'}`} />
                   </div>
                   <div className="flex-1">
-                    <h5 className="text-sm font-bold text-white line-clamp-1">{tut.title}</h5>
-                    <div className="flex justify-between items-center mt-1 text-[10px] text-slate-400">
-                      <span className="font-medium text-slate-500">{tut.category}</span>
+                    <h5 className="text-sm font-bold text-primary line-clamp-1">{tut.title}</h5>
+                    <div className="flex justify-between items-center mt-1 text-[10px] text-secondary">
+                      <span className="font-medium text-secondary">{tut.category}</span>
                       <span className="flex items-center gap-1"><Timer className="w-3 h-3" /> {tut.duration}</span>
                     </div>
                   </div>
@@ -184,10 +184,10 @@ export default function TutorialViewer() {
       <div className="lg:col-span-8 flex flex-col gap-6" id="player-and-guides">
         
         {/* Modern 3D Video Simulator Player (16:9 Bezel) */}
-        <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-2.5 shadow-lg relative overflow-hidden flex flex-col">
+        <div className="neu-flat p-2.5 shadow-lg relative overflow-hidden flex flex-col">
           
           {/* Bezel screen frame */}
-          <div className="relative w-full aspect-video bg-[#0B0A10] rounded-2xl overflow-hidden border border-[#2a2a35] flex flex-col justify-between">
+          <div className="relative w-full aspect-video bg-primary rounded-2xl overflow-hidden border border-theme flex flex-col justify-between">
             
             {/* Live Visualizations Overlay based on tutorial playing state */}
             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
@@ -196,7 +196,7 @@ export default function TutorialViewer() {
               <div className="absolute inset-4 border border-dashed border-white/5 rounded-xl flex items-center justify-center bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] [background-size:20px_20px] opacity-20">
                 {/* 3D Basket Ring Circle Mockup */}
                 <div className="absolute top-0 w-24 h-12 border border-white/10 rounded-b-full"></div>
-                <div className="absolute top-12 w-2 h-2 bg-orange-500 rounded-full shadow-[0_0_10px_#f97316]"></div>
+                <div className="absolute top-12 w-2 h-2 neu-button-accent rounded-full shadow-[0_0_10px_#f97316]"></div>
                 {/* 3 Point Arc */}
                 <div className="absolute top-0 w-48 h-48 border border-white/10 rounded-full transform -translate-y-1/2"></div>
               </div>
@@ -207,11 +207,11 @@ export default function TutorialViewer() {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
-                    className="absolute bg-[#1c1c28]/90 text-white px-6 py-4 rounded-2xl border border-[#2a2a35] flex flex-col items-center gap-3 shadow-2xl backdrop-blur-md pointer-events-auto cursor-pointer group hover:bg-[#2a2a35]/90 transition-colors"
+                    className="absolute neu-pressed/90 text-primary px-6 py-4 rounded-2xl border border-theme flex flex-col items-center gap-3 shadow-2xl backdrop-blur-md pointer-events-auto cursor-pointer group hover:bg-secondary border-theme/90 transition-colors"
                     onClick={() => setIsPlaying(true)}
                   >
-                    <div className="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.4)] border border-orange-400 group-hover:scale-105 transition-transform">
-                      <Play className="w-6 h-6 text-white fill-white translate-x-0.5" />
+                    <div className="w-14 h-14 rounded-full neu-button-accent flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.4)] border border-blue-400 group-hover:scale-105 transition-transform">
+                      <Play className="w-6 h-6 text-primary fill-white translate-x-0.5" />
                     </div>
                   </motion.div>
                 )}
@@ -239,7 +239,7 @@ export default function TutorialViewer() {
                   {selectedTutorial.category === 'Shooting' && (
                     <>
                       {/* Shooter dot */}
-                      <div className="absolute left-10 bottom-10 w-4 h-4 bg-purple-500 rounded-full border border-white flex items-center justify-center text-[8px] font-bold text-white shadow-[0_0_10px_rgba(168,85,247,0.5)]">A</div>
+                      <div className="absolute left-10 bottom-10 w-4 h-4 bg-purple-500 rounded-full border border-white flex items-center justify-center text-[8px] font-bold text-primary shadow-[0_0_10px_rgba(168,85,247,0.5)]">A</div>
                       {/* Shot path */}
                       <motion.div
                         animate={{
@@ -269,7 +269,7 @@ export default function TutorialViewer() {
                           y: [90, 75, 90]
                         }}
                         transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-                        className="absolute w-6 h-6 rounded-full bg-orange-500 shadow-md border border-slate-900 flex items-center justify-center"
+                        className="absolute w-6 h-6 rounded-full neu-button-accent border border-slate-900 flex items-center justify-center"
                       >
                         <span className="text-[10px]">🏀</span>
                       </motion.div>
@@ -307,7 +307,7 @@ export default function TutorialViewer() {
                 <span className="bg-amber-500 text-slate-950 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
                   {selectedTutorial.difficulty}
                 </span>
-                <h3 className="text-sm font-black text-white mt-1 drop-shadow-md">{selectedTutorial.title}</h3>
+                <h3 className="text-sm font-black text-primary mt-1 drop-shadow-md">{selectedTutorial.title}</h3>
               </div>
               <div className="text-right">
                 <span className="text-xs text-amber-400 font-mono font-bold drop-shadow-md">SIMULATOR COCH-TAKTIS</span>
@@ -331,7 +331,7 @@ export default function TutorialViewer() {
               
               {/* Range/Seek Slider */}
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] font-mono text-slate-400">{formatTime(currentTime)}</span>
+                <span className="text-[10px] font-mono text-secondary">{formatTime(currentTime)}</span>
                 <input
                   type="range"
                   min="0"
@@ -340,7 +340,7 @@ export default function TutorialViewer() {
                   onChange={handleScrubChange}
                   className="flex-1 accent-amber-500 h-1 bg-slate-700 rounded-lg cursor-pointer"
                 />
-                <span className="text-[10px] font-mono text-slate-400">{selectedTutorial.duration}</span>
+                <span className="text-[10px] font-mono text-secondary">{selectedTutorial.duration}</span>
               </div>
 
               {/* Bottom control row */}
@@ -362,7 +362,7 @@ export default function TutorialViewer() {
                   </button>
 
                   <div className="flex items-center gap-1.5 ml-2">
-                    <Volume2 className="w-4 h-4 text-slate-400" />
+                    <Volume2 className="w-4 h-4 text-secondary" />
                     <input
                       type="range"
                       min="0"
@@ -382,8 +382,8 @@ export default function TutorialViewer() {
                       onClick={() => setPlaybackSpeed(speed)}
                       className={`text-[9px] font-black px-2 py-1 rounded transition-all ${
                         playbackSpeed === speed
-                          ? 'bg-orange-500 text-white font-black'
-                          : 'bg-[#2a2a35] text-slate-400 hover:bg-slate-700'
+                          ? 'neu-button-accent font-black'
+                          : 'bg-secondary border-theme text-secondary hover:bg-slate-700'
                       }`}
                     >
                       {speed}x
@@ -398,12 +398,12 @@ export default function TutorialViewer() {
         </div>
 
         {/* Playbook Instruction Tabs (Langkah, Latihan, Tips) */}
-        <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-6 shadow-lg">
-          <div className="flex border-b border-[#2a2a35] pb-3 mb-4 gap-4">
+        <div className="neu-flat p-6 shadow-lg">
+          <div className="flex border-b border-theme pb-3 mb-4 gap-4">
             <button
               onClick={() => setActiveTab('langkah')}
               className={`text-[11px] font-bold pb-2 border-b-2 transition-all cursor-pointer uppercase tracking-widest ${
-                activeTab === 'langkah' ? 'border-orange-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'
+                activeTab === 'langkah' ? 'border-blue-500 text-primary' : 'border-transparent text-secondary hover:text-slate-300'
               }`}
             >
               📖 Langkah Eksplorasi
@@ -411,7 +411,7 @@ export default function TutorialViewer() {
             <button
               onClick={() => setActiveTab('latihan')}
               className={`text-[11px] font-bold pb-2 border-b-2 transition-all cursor-pointer uppercase tracking-widest ${
-                activeTab === 'latihan' ? 'border-orange-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'
+                activeTab === 'latihan' ? 'border-blue-500 text-primary' : 'border-transparent text-secondary hover:text-slate-300'
               }`}
             >
               🏋️ Menu Drill Latihan
@@ -419,7 +419,7 @@ export default function TutorialViewer() {
             <button
               onClick={() => setActiveTab('tips')}
               className={`text-[11px] font-bold pb-2 border-b-2 transition-all cursor-pointer uppercase tracking-widest ${
-                activeTab === 'tips' ? 'border-orange-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'
+                activeTab === 'tips' ? 'border-blue-500 text-primary' : 'border-transparent text-secondary hover:text-slate-300'
               }`}
             >
               💡 Tips & Trik Pro
@@ -435,13 +435,13 @@ export default function TutorialViewer() {
                 exit={{ opacity: 0, y: -5 }}
                 className="space-y-4"
               >
-                <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
+                <p className="text-xs text-secondary font-medium leading-relaxed mb-4">
                   {selectedTutorial.description}
                 </p>
                 <div className="space-y-3">
                   {selectedTutorial.steps.map((step, index) => (
                     <div key={index} className="flex gap-3 items-start">
-                      <div className="w-6 h-6 bg-[#0B0A10] text-orange-500 font-bold text-[10px] rounded-lg flex items-center justify-center shrink-0 border border-orange-500/30">
+                      <div className="w-6 h-6 bg-primary text-blue-500 font-bold text-[10px] rounded-lg flex items-center justify-center shrink-0 border border-blue-500/30">
                         {index + 1}
                       </div>
                       <p className="text-[11px] text-slate-300 font-medium leading-relaxed mt-1">{step}</p>
@@ -459,7 +459,7 @@ export default function TutorialViewer() {
                 exit={{ opacity: 0, y: -5 }}
                 className="space-y-4"
               >
-                <p className="text-[11px] text-slate-400 font-medium mb-3">
+                <p className="text-[11px] text-secondary font-medium mb-3">
                   Lakukan drill latihan ini di lapangan untuk mengasah refleks taktis dan memori otot Anda secara rutin:
                 </p>
                 
@@ -468,15 +468,15 @@ export default function TutorialViewer() {
                     {selectedTutorial.drills.map((drill, index) => {
                       const isThisDrillActive = activeDrill === drill;
                       return (
-                        <div key={index} className="p-4 bg-[#0B0A10] rounded-2xl border border-[#2a2a35] flex flex-col gap-3">
+                        <div key={index} className="p-4 bg-primary rounded-2xl border border-theme flex flex-col gap-3">
                           <div className="flex gap-2 items-start">
-                            <ChevronRight className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
-                            <h6 className="text-xs font-bold text-white leading-snug">{drill}</h6>
+                            <ChevronRight className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                            <h6 className="text-xs font-bold text-primary leading-snug">{drill}</h6>
                           </div>
                           <button
                             id={`btn-start-drill-${index}`}
                             onClick={() => handleStartDrill(drill)}
-                            className="text-[10px] font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 hover:text-orange-300 py-2 px-3 rounded-xl flex items-center justify-center gap-1 cursor-pointer w-fit transition-colors"
+                            className="text-[10px] font-bold text-blue-400 neu-button-accent/10 border border-blue-500/20 hover:neu-button-accent/20 hover:text-orange-300 py-2 px-3 rounded-xl flex items-center justify-center gap-1 cursor-pointer w-fit transition-colors"
                           >
                             <Timer className="w-3.5 h-3.5" />
                             Mulai Latihan (60s)
@@ -487,19 +487,19 @@ export default function TutorialViewer() {
                   </div>
 
                   {/* Active Drill Countdown Overlay */}
-                  <div className="bg-[#0B0A10] text-white rounded-2xl p-5 border border-[#2a2a35] flex flex-col items-center justify-center text-center relative overflow-hidden">
+                  <div className="bg-primary text-primary rounded-2xl p-5 border border-theme flex flex-col items-center justify-center text-center relative overflow-hidden">
                     {activeDrill ? (
                       <div className="space-y-4 w-full">
-                        <span className="text-[10px] font-bold text-orange-500 block uppercase tracking-widest">DRILL AKTIF SEDANG BERJALAN</span>
+                        <span className="text-[10px] font-bold text-blue-500 block uppercase tracking-widest">DRILL AKTIF SEDANG BERJALAN</span>
                         <h5 className="text-xs font-medium px-4 line-clamp-1 text-slate-300">{activeDrill.split(':')[0]}</h5>
                         
-                        <div className="text-4xl font-black font-mono text-white animate-pulse">
+                        <div className="text-4xl font-black font-mono text-primary animate-pulse">
                           {formatTime(drillTimeLeft)}
                         </div>
 
                         {/* Progress slider bar for drill */}
-                        <div className="w-full bg-[#1c1c28] h-1.5 rounded-full overflow-hidden">
-                          <div className="bg-orange-500 h-full rounded-full transition-all" style={{ width: `${(drillTimeLeft / 60) * 100}%` }} />
+                        <div className="w-full neu-pressed h-1.5 rounded-full overflow-hidden">
+                          <div className="neu-button-accent h-full rounded-full transition-all" style={{ width: `${(drillTimeLeft / 60) * 100}%` }} />
                         </div>
 
                         <div className="flex items-center justify-center gap-2 pt-2">
@@ -513,14 +513,14 @@ export default function TutorialViewer() {
                           </button>
                           <button
                             onClick={handleResetDrillTimer}
-                            className="text-[10px] font-bold bg-[#1c1c28] text-slate-400 hover:text-white px-4 py-2 rounded-xl border border-[#2a2a35] transition-colors cursor-pointer"
+                            className="text-[10px] font-bold neu-pressed text-secondary hover:text-primary px-4 py-2 rounded-xl border border-theme transition-colors cursor-pointer"
                           >
                             Reset
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="space-y-3 py-8 text-slate-500 flex flex-col items-center">
+                      <div className="space-y-3 py-8 text-secondary flex flex-col items-center">
                         <Compass className="w-10 h-10 text-slate-600 opacity-50" />
                         <p className="text-[11px] max-w-[200px] leading-relaxed">Klik tombol "Mulai Latihan" untuk memicu penghitung waktu latihan drill harian Anda.</p>
                       </div>

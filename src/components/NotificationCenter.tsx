@@ -98,28 +98,28 @@ export default function NotificationCenter({
       
       {/* LEFT: Notification Composer Form (5 columns) */}
       <div className="lg:col-span-5 flex flex-col gap-5">
-        <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-6 md:p-8 shadow-lg relative overflow-hidden">
+        <div className="neu-flat p-6 md:p-8 shadow-lg relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-            <MessageSquare className="w-32 h-32 text-orange-500 transform -rotate-12" />
+            <MessageSquare className="w-32 h-32 text-blue-500 transform -rotate-12" />
           </div>
           
-          <h4 className="text-sm font-black text-white mb-2 flex items-center gap-2 tracking-wide">
-            <MessageSquare className="w-5 h-5 text-orange-500" />
+          <h4 className="text-sm font-black text-primary mb-2 flex items-center gap-2 tracking-wide">
+            <MessageSquare className="w-5 h-5 text-blue-500" />
             Kirim Notifikasi
           </h4>
-          <p className="text-[11px] text-slate-400 mb-6 leading-relaxed font-medium">
+          <p className="text-[11px] text-secondary mb-6 leading-relaxed font-medium">
             Gunakan pengirim terintegrasi untuk menyebarkan laporan absensi mendadak, rilis nilai raport, pengingat iuran bulanan, atau pembaruan jadwal.
           </p>
 
-          <form onSubmit={handleSend} className="space-y-5 pt-4 border-t border-[#2a2a35] relative z-10">
+          <form onSubmit={handleSend} className="space-y-5 pt-4 border-t border-theme relative z-10">
             {/* Student Select */}
             <div>
-              <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Penerima (Wali Murid)</label>
+              <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Penerima (Wali Murid)</label>
               <select
                 id="select-notif-student-recipient"
                 value={selectedStudentId}
                 onChange={(e) => setSelectedStudentId(e.target.value)}
-                className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors cursor-pointer"
+                className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 transition-colors cursor-pointer"
               >
                 {students.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -132,12 +132,12 @@ export default function NotificationCenter({
             {/* Template Selector & Channel */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Topik Template</label>
+                <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Topik Template</label>
                 <select
                   id="select-notif-template"
                   value={template}
                   onChange={(e) => setTemplate(e.target.value as any)}
-                  className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors cursor-pointer"
+                  className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 transition-colors cursor-pointer"
                 >
                   <option value="attendance">Absensi Latihan</option>
                   <option value="report_card">Raport Skill</option>
@@ -147,12 +147,12 @@ export default function NotificationCenter({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Saluran Kirim</label>
+                <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Saluran Kirim</label>
                 <select
                   id="select-notif-channel"
                   value={channel}
                   onChange={(e) => setChannel(e.target.value as any)}
-                  className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors cursor-pointer"
+                  className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 transition-colors cursor-pointer"
                 >
                   <option value="WhatsApp">🟢 WhatsApp (Instant)</option>
                   <option value="SMS">🔵 SMS Gateway</option>
@@ -163,7 +163,7 @@ export default function NotificationCenter({
 
             {/* Title message */}
             <div>
-              <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Subjek Pemberitahuan</label>
+              <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Subjek Pemberitahuan</label>
               <input
                 id="input-notif-title"
                 type="text"
@@ -171,20 +171,20 @@ export default function NotificationCenter({
                 value={customTitle}
                 onChange={(e) => setCustomTitle(e.target.value)}
                 placeholder="Subjek Pemberitahuan"
-                className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 placeholder-slate-600 transition-colors"
+                className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 placeholder-slate-600 transition-colors"
               />
             </div>
 
             {/* Body custom message */}
             <div>
-              <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Isi Pesan Notifikasi</label>
+              <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Isi Pesan Notifikasi</label>
               <textarea
                 id="textarea-notif-body"
                 required
                 rows={5}
                 value={customMessage}
                 onChange={(e) => setCustomMessage(e.target.value)}
-                className="w-full text-xs p-4 rounded-2xl border border-[#2a2a35] bg-[#1c1c28] text-slate-300 outline-none focus:border-orange-500 placeholder-slate-600 transition-colors font-medium leading-relaxed resize-none custom-scrollbar"
+                className="w-full text-xs p-4 rounded-2xl border border-theme neu-pressed text-slate-300 outline-none focus:border-blue-500 placeholder-slate-600 transition-colors font-medium leading-relaxed resize-none custom-scrollbar"
               />
             </div>
 
@@ -193,7 +193,7 @@ export default function NotificationCenter({
               id="btn-submit-notif"
               type="submit"
               disabled={isSending}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold py-3.5 rounded-xl shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:scale-105 active:scale-95 transition-all cursor-pointer disabled:opacity-50 uppercase tracking-widest text-[11px]"
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-orange-600 hover:from-orange-400 hover:to-blue-500 text-primary font-bold py-3.5 rounded-xl shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:scale-105 active:scale-95 transition-all cursor-pointer disabled:opacity-50 uppercase tracking-widest text-[11px]"
             >
               {isSending ? (
                 <>
@@ -223,7 +223,7 @@ export default function NotificationCenter({
                 className="mt-5 p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-[11px] flex items-center gap-3 shadow-lg font-medium"
               >
                 <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
-                <span>Simulasi SMS/WhatsApp berhasil dikirim ke orang tua <strong className="text-white">{selectedStudent?.name}</strong>. Log tercatat di riwayat pengiriman.</span>
+                <span>Simulasi SMS/WhatsApp berhasil dikirim ke orang tua <strong className="text-primary">{selectedStudent?.name}</strong>. Log tercatat di riwayat pengiriman.</span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -232,13 +232,13 @@ export default function NotificationCenter({
 
       {/* RIGHT: Notifications Log History (7 columns) */}
       <div className="lg:col-span-7 flex flex-col gap-5" id="notifications-history">
-        <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-5 shadow-lg flex justify-between items-center">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Log Riwayat Notifikasi <span className="text-orange-500">({notifications.length})</span></span>
+        <div className="neu-flat p-5 shadow-lg flex justify-between items-center">
+          <span className="text-[11px] font-bold text-secondary uppercase tracking-widest">Log Riwayat Notifikasi <span className="text-blue-500">({notifications.length})</span></span>
           {notifications.length > 0 && (
             <button
               id="btn-clear-notif-logs"
               onClick={onClearLogs}
-              className="text-[10px] font-bold uppercase tracking-widest text-rose-500 hover:text-white hover:bg-rose-500/20 bg-transparent border border-rose-500/30 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+              className="text-[10px] font-bold uppercase tracking-widest text-rose-500 hover:text-primary hover:bg-rose-500/20 bg-transparent border border-rose-500/30 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
             >
               Hapus Semua Log
             </button>
@@ -248,10 +248,10 @@ export default function NotificationCenter({
         {/* List of Sent Notifications */}
         <div className="space-y-4 max-h-[550px] overflow-y-auto pr-2 custom-scrollbar">
           {notifications.length === 0 ? (
-            <div className="bg-[#1c1c28]/50 border border-[#2a2a35] border-dashed rounded-3xl p-12 text-center text-slate-500 space-y-4">
+            <div className="neu-pressed/50 border border-theme border-dashed rounded-3xl p-12 text-center text-secondary space-y-4">
               <PhoneCall className="w-12 h-12 text-slate-600 mx-auto opacity-50" />
               <div>
-                <h5 className="font-bold text-white mb-2 uppercase tracking-widest text-[11px]">Belum Ada Notifikasi Terkirim</h5>
+                <h5 className="font-bold text-primary mb-2 uppercase tracking-widest text-[11px]">Belum Ada Notifikasi Terkirim</h5>
                 <p className="text-[11px] max-w-xs mx-auto leading-relaxed">Semua notifikasi absensi dan rapor yang dikirim ke orang tua murid akan tercatat secara detail di panel riwayat log ini.</p>
               </div>
             </div>
@@ -260,13 +260,13 @@ export default function NotificationCenter({
               <div
                 key={notif.id}
                 id={`card-notif-log-${notif.id}`}
-                className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-5 shadow-lg space-y-3 relative hover:border-slate-600 transition-colors"
+                className="neu-flat p-5 shadow-lg space-y-3 relative hover:border-slate-600 transition-colors"
               >
                 {/* Meta details */}
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500">Penerima: <span className="text-orange-500">{notif.parentName}</span> (Ortu {notif.studentName})</span>
-                    <h5 className="text-[11px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-secondary">Penerima: <span className="text-blue-500">{notif.parentName}</span> (Ortu {notif.studentName})</span>
+                    <h5 className="text-[11px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
                       <span className="text-sm">💬</span>
                       {notif.title}
                     </h5>
@@ -275,20 +275,20 @@ export default function NotificationCenter({
                   {/* Channel icon pill */}
                   <span className={`text-[9px] font-bold px-3 py-1 rounded-full border uppercase tracking-widest ${
                     notif.channel === 'WhatsApp' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
-                    notif.channel === 'SMS' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' :
-                    'bg-orange-500/10 text-orange-400 border-orange-500/30'
+                    notif.channel === 'SMS' ? 'neu-button-accent/10 text-blue-400 border-blue-500/30' :
+                    'neu-button-accent/10 text-blue-400 border-blue-500/30'
                   }`}>
                     {notif.channel}
                   </span>
                 </div>
 
-                <p className="text-[11px] text-slate-400 font-medium leading-relaxed bg-[#1c1c28] p-4 rounded-2xl border border-[#2a2a35]">
+                <p className="text-[11px] text-secondary font-medium leading-relaxed neu-pressed p-4 rounded-2xl border border-theme">
                   {notif.message}
                 </p>
 
                 {/* Status and timestamp */}
-                <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-slate-500 pt-1">
-                  <span>Telp: <strong className="text-slate-400">{notif.parentPhone}</strong></span>
+                <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-secondary pt-1">
+                  <span>Telp: <strong className="text-secondary">{notif.parentPhone}</strong></span>
                   <div className="flex items-center gap-2">
                     <span className="text-emerald-500 flex items-center gap-1.5 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>

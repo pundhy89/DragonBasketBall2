@@ -86,16 +86,16 @@ export default function ScheduleManager({
       
       {/* LEFT: Add Schedule Form / Action Panel (4 columns) */}
       <div className="lg:col-span-4 flex flex-col gap-5">
-        <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-6 shadow-lg relative overflow-hidden">
+        <div className="neu-flat p-6 shadow-lg relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-            <Calendar className="w-32 h-32 text-orange-500 transform rotate-12" />
+            <Calendar className="w-32 h-32 text-blue-500 transform rotate-12" />
           </div>
           
-          <h4 className="text-sm font-black text-white mb-2 flex items-center gap-2 tracking-wide">
-            <Calendar className="w-5 h-5 text-orange-500" />
+          <h4 className="text-sm font-black text-primary mb-2 flex items-center gap-2 tracking-wide">
+            <Calendar className="w-5 h-5 text-blue-500" />
             Manajemen Jadwal
           </h4>
-          <p className="text-[11px] text-slate-400 mb-5 leading-relaxed font-medium">
+          <p className="text-[11px] text-secondary mb-5 leading-relaxed font-medium">
             Atur kalender latihan rutin, tetapkan instruktur coach, tentukan fokus drill taktis, dan informasikan detail ke murid secara instan.
           </p>
 
@@ -103,15 +103,15 @@ export default function ScheduleManager({
             <button
               id="btn-open-add-practice"
               onClick={() => setIsAdding(true)}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:scale-105 active:scale-95 transition-all cursor-pointer uppercase tracking-widest text-[11px]"
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-orange-600 hover:from-orange-400 hover:to-blue-500 text-primary font-bold py-3.5 px-4 rounded-xl shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:scale-105 active:scale-95 transition-all cursor-pointer uppercase tracking-widest text-[11px]"
             >
               <Plus className="w-4 h-4" />
               Buat Jadwal Baru
             </button>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4 border-t border-[#2a2a35] relative z-10">
+            <form onSubmit={handleSubmit} className="space-y-4 pt-4 border-t border-theme relative z-10">
               <div>
-                <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Judul Latihan</label>
+                <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Judul Latihan</label>
                 <input
                   id="input-practice-title"
                   type="text"
@@ -119,37 +119,37 @@ export default function ScheduleManager({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Contoh: Drill Tembakan"
-                  className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 placeholder-slate-600 transition-colors"
+                  className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 placeholder-slate-600 transition-colors"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Tanggal</label>
+                  <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Tanggal</label>
                   <input
                     id="input-practice-date"
                     type="date"
                     required
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors [color-scheme:dark]"
+                    className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 transition-colors [color-scheme:dark]"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Waktu</label>
+                  <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Waktu</label>
                   <input
                     id="input-practice-time"
                     type="time"
                     required
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors [color-scheme:dark]"
+                    className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 transition-colors [color-scheme:dark]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Lokasi Lapangan</label>
+                <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Lokasi Lapangan</label>
                 <input
                   id="input-practice-location"
                   type="text"
@@ -157,18 +157,18 @@ export default function ScheduleManager({
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="Contoh: Astra Arena, Court A"
-                  className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 placeholder-slate-600 transition-colors"
+                  className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 placeholder-slate-600 transition-colors"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Fokus Drill</label>
+                  <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Fokus Drill</label>
                   <select
                     id="select-practice-focus"
                     value={focus}
                     onChange={(e) => setFocus(e.target.value as PracticeSession['focus'])}
-                    className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors cursor-pointer"
+                    className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 transition-colors cursor-pointer"
                   >
                     <option value="Dribbling">Dribbling</option>
                     <option value="Shooting">Shooting</option>
@@ -179,27 +179,27 @@ export default function ScheduleManager({
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Kepala Pelatih</label>
+                  <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Kepala Pelatih</label>
                   <input
                     id="input-practice-coach"
                     type="text"
                     required
                     value={coach}
                     onChange={(e) => setCoach(e.target.value)}
-                    className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 transition-colors"
+                    className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest">Deskripsi & Catatan</label>
+                <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Deskripsi & Catatan</label>
                 <textarea
                   id="textarea-practice-desc"
                   rows={2}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Contoh: Bawa jersey merah, pelajari playbook..."
-                  className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500 placeholder-slate-600 transition-colors resize-none"
+                  className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500 placeholder-slate-600 transition-colors resize-none"
                 />
               </div>
 
@@ -207,17 +207,17 @@ export default function ScheduleManager({
                 <button
                   type="button"
                   onClick={() => setIsAdding(false)}
-                  className="w-1/3 text-[11px] font-bold uppercase tracking-widest text-slate-400 hover:text-white bg-[#1c1c28] hover:bg-[#2a2a35] rounded-xl transition-all cursor-pointer border border-[#2a2a35]"
+                  className="w-1/3 text-[11px] font-bold uppercase tracking-widest text-secondary hover:text-primary neu-pressed hover:bg-secondary border-theme rounded-xl transition-all cursor-pointer border border-theme"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="w-2/3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold py-3 rounded-xl shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-widest text-[11px]"
+                  className="w-2/3 bg-gradient-to-r from-blue-500 to-orange-600 hover:from-orange-400 hover:to-blue-500 text-primary font-bold py-3 rounded-xl shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-widest text-[11px]"
                 >
                   {formSuccess ? (
                     <>
-                      <CheckCircle className="w-4 h-4 text-white" />
+                      <CheckCircle className="w-4 h-4 text-primary" />
                       Berhasil!
                     </>
                   ) : (
@@ -233,11 +233,11 @@ export default function ScheduleManager({
         </div>
 
         {/* Informational Widget */}
-        <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+        <div className="neu-button-accent/10 border border-blue-500/30 rounded-2xl p-5 shadow-lg relative overflow-hidden">
           <div className="absolute -right-4 -bottom-4 opacity-10">
-            <Sparkles className="w-24 h-24 text-orange-500" />
+            <Sparkles className="w-24 h-24 text-blue-500" />
           </div>
-          <span className="text-[10px] text-orange-400 font-bold block uppercase tracking-widest mb-2 relative z-10">Catatan Coach Harian</span>
+          <span className="text-[10px] text-blue-400 font-bold block uppercase tracking-widest mb-2 relative z-10">Catatan Coach Harian</span>
           <p className="text-[11px] text-slate-300 leading-relaxed font-medium italic relative z-10">
             "Semua atlet diwajibkan melakukan pemanasan (dynamic stretching) minimal 15 menit sebelum waktu latihan yang tertera di jadwal harian."
           </p>
@@ -247,9 +247,9 @@ export default function ScheduleManager({
       {/* RIGHT: Practice Schedule Cards (8 columns) */}
       <div className="lg:col-span-8 flex flex-col gap-5" id="schedule-timeline">
         
-        <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-5 shadow-lg flex justify-between items-center">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Latihan Terjadwal <span className="text-orange-500">({sortedSchedule.length})</span></span>
-          <span className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">Hari Ini: <strong className="text-white font-bold ml-1">Jumat, 26 Juni 2026</strong></span>
+        <div className="neu-flat p-5 shadow-lg flex justify-between items-center">
+          <span className="text-[11px] font-bold text-secondary uppercase tracking-widest">Latihan Terjadwal <span className="text-blue-500">({sortedSchedule.length})</span></span>
+          <span className="text-[10px] text-secondary font-medium uppercase tracking-widest">Hari Ini: <strong className="text-primary font-bold ml-1">Jumat, 26 Juni 2026</strong></span>
         </div>
 
         {/* Schedule grid timeline cards */}
@@ -262,16 +262,16 @@ export default function ScheduleManager({
               <div
                 key={session.id}
                 id={`card-schedule-${session.id}`}
-                className={`bg-[#13131a] border border-[#2a2a35] rounded-3xl p-6 shadow-lg transition-all relative overflow-hidden flex flex-col md:flex-row gap-6 ${
+                className={`neu-flat p-6 shadow-lg transition-all relative overflow-hidden flex flex-col md:flex-row gap-6 ${
                   session.completed ? 'opacity-50' : 'hover:border-slate-600'
                 }`}
               >
                 {/* Visual focus ribbon accent */}
                 <div className={`absolute top-0 left-0 w-1.5 h-full ${
                   session.focus === 'Dribbling' ? 'bg-orange-400' :
-                  session.focus === 'Shooting' ? 'bg-orange-500' :
+                  session.focus === 'Shooting' ? 'neu-button-accent' :
                   session.focus === 'Passing' ? 'bg-yellow-500' :
-                  session.focus === 'Defense' ? 'bg-blue-500' :
+                  session.focus === 'Defense' ? 'neu-button-accent' :
                   session.focus === 'Stamina & Tactics' ? 'bg-red-500' :
                   'bg-purple-500'
                 }`} />
@@ -280,18 +280,18 @@ export default function ScheduleManager({
                 <div className="md:w-40 shrink-0 flex flex-col justify-between pl-3">
                   <div className="space-y-3">
                     <span className={`inline-block text-[9px] font-bold px-3 py-1.5 rounded-lg border uppercase tracking-widest ${
-                      session.focus === 'Dribbling' ? 'bg-orange-500/10 text-orange-400 border-orange-500/30' :
-                      session.focus === 'Shooting' ? 'bg-orange-500/10 text-orange-400 border-orange-500/30' :
+                      session.focus === 'Dribbling' ? 'neu-button-accent/10 text-blue-400 border-blue-500/30' :
+                      session.focus === 'Shooting' ? 'neu-button-accent/10 text-blue-400 border-blue-500/30' :
                       session.focus === 'Passing' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' :
-                      session.focus === 'Defense' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' :
+                      session.focus === 'Defense' ? 'neu-button-accent/10 text-blue-400 border-blue-500/30' :
                       session.focus === 'Stamina & Tactics' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
                       'bg-purple-500/10 text-purple-400 border-purple-500/30'
                     }`}>
                       {session.focus}
                     </span>
-                    <div className="text-white font-bold">
+                    <div className="text-primary font-bold">
                       <span className="text-sm block font-black leading-tight mb-1">{new Date(session.date).toLocaleDateString('id-ID', { weekday: 'long' })}</span>
-                      <span className="text-[10px] text-slate-500 block leading-tight font-bold tracking-widest">{session.date}</span>
+                      <span className="text-[10px] text-secondary block leading-tight font-bold tracking-widest">{session.date}</span>
                     </div>
                   </div>
 
@@ -300,7 +300,7 @@ export default function ScheduleManager({
                     <span className={`inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border shadow-inner ${
                       daysLeft === 'Hari Ini' ? 'bg-red-500/20 text-red-400 border-red-500/50 animate-pulse' :
                       daysLeft === 'Besok' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' :
-                      isFinished ? 'bg-[#1c1c28] text-slate-500 border-[#2a2a35] shadow-none' :
+                      isFinished ? 'neu-pressed text-secondary border-theme shadow-none' :
                       'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
                     }`}>
                       <Clock className="w-3.5 h-3.5" />
@@ -313,39 +313,39 @@ export default function ScheduleManager({
                 <div className="flex-1 flex flex-col justify-between">
                   <div className="space-y-3">
                     <div className="flex justify-between items-start gap-2">
-                      <h5 className={`text-base font-black tracking-wide ${session.completed ? 'line-through text-slate-500' : 'text-white'}`}>
+                      <h5 className={`text-base font-black tracking-wide ${session.completed ? 'line-through text-secondary' : 'text-primary'}`}>
                         {session.title}
                       </h5>
                     </div>
                     
-                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                    <p className="text-[11px] text-secondary font-medium leading-relaxed">
                       {session.description || 'Sesi latihan rutin untuk mengasah performa atlet.'}
                     </p>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-3 text-[10px] text-slate-400 font-bold tracking-widest uppercase">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-3 text-[10px] text-secondary font-bold tracking-widest uppercase">
                       <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-slate-500 shrink-0" />
+                        <Clock className="w-4 h-4 text-secondary shrink-0" />
                         <span>Pukul {session.time} WIB</span>
                       </div>
                       <div className="flex items-center gap-2 col-span-2 md:col-span-1">
-                        <MapPin className="w-4 h-4 text-slate-500 shrink-0" />
+                        <MapPin className="w-4 h-4 text-secondary shrink-0" />
                         <span className="truncate">{session.location}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-slate-500 shrink-0" />
+                        <User className="w-4 h-4 text-secondary shrink-0" />
                         <span>{session.coach}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Toggle completion */}
-                  <div className="mt-5 pt-4 border-t border-[#2a2a35] flex justify-end">
+                  <div className="mt-5 pt-4 border-t border-theme flex justify-end">
                     <button
                       id={`btn-complete-practice-${session.id}`}
                       onClick={() => onToggleCompletePractice(session.id)}
                       className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
                         session.completed 
-                          ? 'bg-[#1c1c28] text-slate-500 border border-[#2a2a35]' 
+                          ? 'neu-pressed text-secondary border border-theme' 
                           : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20'
                       }`}
                     >

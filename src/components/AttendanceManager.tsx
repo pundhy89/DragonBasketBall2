@@ -126,21 +126,21 @@ export default function AttendanceManager({
     <div className="space-y-6" id="attendance-workspace">
       
       {/* Date selector header & Coach selection */}
-      <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-6 shadow-lg flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-6">
+      <div className="neu-flat p-6 shadow-lg flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-6">
         
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#1c1c28] border border-orange-500/30 flex items-center justify-center text-white shadow-[0_0_15px_rgba(249,115,22,0.15)] shrink-0">
-            <Calendar className="w-6 h-6 text-orange-500" />
+          <div className="w-12 h-12 rounded-2xl neu-pressed border border-blue-500/30 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(249,115,22,0.15)] shrink-0">
+            <Calendar className="w-6 h-6 text-blue-500" />
           </div>
           <div>
-            <h4 className="text-sm font-black text-white uppercase tracking-widest leading-none mb-1.5">Absensi Harian & Evaluasi Sesi</h4>
-            <span className="text-[11px] text-slate-400 font-medium">Lakukan pencatatan presensi siswa terstruktur per kelompok kelas.</span>
+            <h4 className="text-sm font-black text-primary uppercase tracking-widest leading-none mb-1.5">Absensi Harian & Evaluasi Sesi</h4>
+            <span className="text-[11px] text-secondary font-medium">Lakukan pencatatan presensi siswa terstruktur per kelompok kelas.</span>
           </div>
         </div>
 
         {/* Coach-in-Charge Dropdown */}
-        <div className="bg-[#1c1c28] border border-[#2a2a35] rounded-xl p-3 flex items-center gap-3 self-start xl:self-auto min-w-[280px]">
-          <div className="w-9 h-9 rounded-full border border-orange-500/50 bg-[#13131a] flex items-center justify-center text-base shadow-sm shrink-0 overflow-hidden">
+        <div className="neu-pressed border border-theme rounded-xl p-3 flex items-center gap-3 self-start xl:self-auto min-w-[280px]">
+          <div className="w-9 h-9 rounded-full border border-blue-500/50 bg-secondary flex items-center justify-center text-base shadow-sm shrink-0 overflow-hidden">
             {selectedCoach.avatar?.startsWith('http') || selectedCoach.avatar?.startsWith('data:') ? (
               <img src={selectedCoach.avatar} alt={selectedCoach.name} className="w-full h-full object-cover" />
             ) : (
@@ -148,11 +148,11 @@ export default function AttendanceManager({
             )}
           </div>
           <div className="flex-1">
-            <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 block leading-none mb-1">Pelatih Pengampu Sesi:</label>
+            <label className="text-[9px] font-bold uppercase tracking-widest text-secondary block leading-none mb-1">Pelatih Pengampu Sesi:</label>
             <select
               value={sessionCoachId}
               onChange={(e) => setSessionCoachId(e.target.value)}
-              className="text-xs font-bold text-white bg-transparent border-none outline-none p-0 w-full cursor-pointer"
+              className="text-xs font-bold text-primary bg-transparent border-none outline-none p-0 w-full cursor-pointer"
             >
               {coaches.map(c => (
                 <option key={c.id} value={c.id}>{c.name} ({c.role})</option>
@@ -163,12 +163,12 @@ export default function AttendanceManager({
 
         {/* Date options Dropdown & WhatsApp Broadcast */}
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Tanggal:</span>
+          <span className="text-xs font-bold text-secondary uppercase tracking-widest">Tanggal:</span>
           <select
             id="select-attendance-date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="text-[11px] font-bold border border-[#2a2a35] bg-[#1c1c28] text-white rounded-xl py-2 px-3 shadow-md cursor-pointer outline-none focus:border-orange-500 transition-colors"
+            className="text-[11px] font-bold border border-theme neu-pressed text-primary rounded-xl py-2 px-3 shadow-md cursor-pointer outline-none focus:border-blue-500 transition-colors"
           >
             {attendanceDates.map((date) => (
               <option key={date} value={date}>
@@ -180,7 +180,7 @@ export default function AttendanceManager({
           <button
             id="btn-auto-notify-parents"
             onClick={handleAutoNotifyParents}
-            className="text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r from-orange-500 to-orange-600 text-white border border-orange-400 px-4 py-2.5 rounded-xl shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 ml-2"
+            className="text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r from-blue-500 to-orange-600 text-primary border border-blue-400 px-4 py-2.5 rounded-xl shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 ml-2"
           >
             <ClipboardCheck className="w-4 h-4" />
             Kirim WhatsApp Ortu
@@ -190,9 +190,9 @@ export default function AttendanceManager({
       </div>
 
       {/* Class Filtering Bar */}
-      <div className="bg-[#13131a] border border-[#2a2a35] rounded-2xl p-5 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-          <Filter className="w-4 h-4 text-orange-500" />
+      <div className="neu-flat p-5 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-secondary">
+          <Filter className="w-4 h-4 text-blue-500" />
           <span>Saring Berdasarkan Kelompok Kelas:</span>
         </div>
         
@@ -201,8 +201,8 @@ export default function AttendanceManager({
             onClick={() => setSelectedClassFilter('All')}
             className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-xl transition-all cursor-pointer ${
               selectedClassFilter === 'All'
-                ? 'bg-orange-500/20 text-orange-500 border border-orange-500/50 shadow-[0_0_10px_rgba(249,115,22,0.2)]'
-                : 'bg-[#1c1c28] text-slate-500 border border-[#2a2a35] hover:border-slate-600'
+                ? 'neu-button-accent/20 text-blue-500 border border-blue-500/50 shadow-[0_0_10px_rgba(249,115,22,0.2)]'
+                : 'neu-pressed text-secondary border border-theme hover:border-slate-600'
             }`}
           >
             Semua Murid ({students.length})
@@ -216,7 +216,7 @@ export default function AttendanceManager({
                 className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-xl transition-all cursor-pointer ${
                   selectedClassFilter === level
                     ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.2)]'
-                    : 'bg-[#1c1c28] text-slate-500 border border-[#2a2a35] hover:border-slate-600'
+                    : 'neu-pressed text-secondary border border-theme hover:border-slate-600'
                 }`}
               >
                 {level} ({count})
@@ -228,40 +228,40 @@ export default function AttendanceManager({
 
       {/* Stats Counter Row for active filter */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5" id="attendance-counters">
-        <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-5 shadow-lg flex items-center justify-between">
+        <div className="neu-flat p-5 shadow-lg flex items-center justify-between">
           <div>
-            <span className="text-[9px] text-slate-500 block font-bold uppercase tracking-widest mb-1">Persentase Hadir</span>
-            <span className="text-3xl font-black text-white">{stats.rate}%</span>
+            <span className="text-[9px] text-secondary block font-bold uppercase tracking-widest mb-1">Persentase Hadir</span>
+            <span className="text-3xl font-black text-primary">{stats.rate}%</span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-[#1c1c28] flex items-center justify-center text-emerald-500 text-xl font-black border border-[#2a2a35] shadow-inner">
+          <div className="w-12 h-12 rounded-2xl neu-pressed flex items-center justify-center text-emerald-500 text-xl font-black border border-theme shadow-inner">
             %
           </div>
         </div>
 
-        <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-5 shadow-lg flex items-center justify-between">
+        <div className="neu-flat p-5 shadow-lg flex items-center justify-between">
           <div>
-            <span className="text-[9px] text-slate-500 block font-bold uppercase tracking-widest mb-1">Hadir / Terlambat</span>
-            <span className="text-3xl font-black text-emerald-500">{stats.present + stats.late} <span className="text-sm font-medium text-slate-500">/ {filteredStudents.length}</span></span>
+            <span className="text-[9px] text-secondary block font-bold uppercase tracking-widest mb-1">Hadir / Terlambat</span>
+            <span className="text-3xl font-black text-emerald-500">{stats.present + stats.late} <span className="text-sm font-medium text-secondary">/ {filteredStudents.length}</span></span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 text-lg font-black border border-emerald-500/20">
             H
           </div>
         </div>
 
-        <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-5 shadow-lg flex items-center justify-between">
+        <div className="neu-flat p-5 shadow-lg flex items-center justify-between">
           <div>
-            <span className="text-[9px] text-slate-500 block font-bold uppercase tracking-widest mb-1">Sakit / Izin</span>
-            <span className="text-3xl font-black text-yellow-500">{stats.sick} <span className="text-sm font-medium text-slate-500">Atlit</span></span>
+            <span className="text-[9px] text-secondary block font-bold uppercase tracking-widest mb-1">Sakit / Izin</span>
+            <span className="text-3xl font-black text-yellow-500">{stats.sick} <span className="text-sm font-medium text-secondary">Atlit</span></span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-yellow-500/10 flex items-center justify-center text-yellow-500 text-lg font-black border border-yellow-500/20">
             S
           </div>
         </div>
 
-        <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-5 shadow-lg flex items-center justify-between">
+        <div className="neu-flat p-5 shadow-lg flex items-center justify-between">
           <div>
-            <span className="text-[9px] text-slate-500 block font-bold uppercase tracking-widest mb-1">Mangkir (Alfa)</span>
-            <span className="text-3xl font-black text-rose-500">{stats.absent} <span className="text-sm font-medium text-slate-500">Atlit</span></span>
+            <span className="text-[9px] text-secondary block font-bold uppercase tracking-widest mb-1">Mangkir (Alfa)</span>
+            <span className="text-3xl font-black text-rose-500">{stats.absent} <span className="text-sm font-medium text-secondary">Atlit</span></span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500 text-lg font-black border border-rose-500/20">
             A
@@ -284,11 +284,11 @@ export default function AttendanceManager({
       </AnimatePresence>
 
       {/* Student Attendance Spreadsheet Roster */}
-      <div className="bg-[#13131a] border border-[#2a2a35] rounded-3xl p-6 md:p-8 shadow-lg overflow-hidden">
+      <div className="neu-flat p-6 md:p-8 shadow-lg overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse min-w-[600px]">
             <thead>
-              <tr className="border-b border-[#2a2a35] text-slate-500 text-[10px] uppercase font-bold tracking-widest">
+              <tr className="border-b border-theme text-secondary text-[10px] uppercase font-bold tracking-widest">
                 <th className="pb-4 pl-2">Atlit Basketball</th>
                 <th className="pb-4 text-center">Tingkat Kelas</th>
                 <th className="pb-4 text-center">Kehadiran Kumulatif</th>
@@ -299,7 +299,7 @@ export default function AttendanceManager({
             <tbody className="divide-y divide-[#1c1c28]">
               {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-500 text-xs font-medium bg-[#0B0A10]/50 rounded-xl">
+                  <td colSpan={5} className="py-12 text-center text-secondary text-xs font-medium bg-primary/50 rounded-xl">
                     Tidak ada siswa yang terdaftar di kelas "{selectedClassFilter}".
                   </td>
                 </tr>
@@ -315,19 +315,19 @@ export default function AttendanceManager({
                   // Class badge colors
                   const classColors: Record<string, string> = {
                     'SD Lower': 'bg-rose-500/10 text-rose-400 border-rose-500/30',
-                    'SD Berkembang': 'bg-orange-500/10 text-orange-400 border-orange-500/30',
+                    'SD Berkembang': 'neu-button-accent/10 text-blue-400 border-blue-500/30',
                     'SD Upper': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
-                    'SMP': 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+                    'SMP': 'neu-button-accent/10 text-blue-400 border-blue-500/30',
                     'SMA': 'bg-purple-500/10 text-purple-400 border-purple-500/30'
                   };
 
                   return (
-                    <tr key={s.id} id={`row-student-attendance-${s.id}`} className="hover:bg-[#1c1c28]/60 transition-all">
+                    <tr key={s.id} id={`row-student-attendance-${s.id}`} className="hover:neu-pressed/60 transition-all">
                       
                       {/* Athlete Name Card */}
                       <td className="py-4 pl-2">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full border border-orange-500/30 bg-[#13131a] flex items-center justify-center text-lg shadow-sm overflow-hidden">
+                          <div className="w-10 h-10 rounded-full border border-blue-500/30 bg-secondary flex items-center justify-center text-lg shadow-sm overflow-hidden">
                             {s.avatar?.startsWith('http') || s.avatar?.startsWith('data:') ? (
                               <img src={s.avatar} alt={s.name} className="w-full h-full object-cover" />
                             ) : (
@@ -335,15 +335,15 @@ export default function AttendanceManager({
                             )}
                           </div>
                           <div>
-                            <span className="font-bold text-white text-sm block leading-tight mb-0.5">{s.name}</span>
-                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{s.position}</span>
+                            <span className="font-bold text-primary text-sm block leading-tight mb-0.5">{s.name}</span>
+                            <span className="text-[9px] text-secondary font-bold uppercase tracking-widest">{s.position}</span>
                           </div>
                         </div>
                       </td>
 
                       {/* Class level division */}
                       <td className="py-4 text-center">
-                        <span className={`text-[9px] font-bold uppercase tracking-widest border px-3 py-1 rounded-full ${classColors[s.classLevel] || 'bg-[#1c1c28] text-slate-400'}`}>
+                        <span className={`text-[9px] font-bold uppercase tracking-widest border px-3 py-1 rounded-full ${classColors[s.classLevel] || 'neu-pressed text-secondary'}`}>
                           {s.classLevel}
                         </span>
                       </td>
@@ -358,21 +358,21 @@ export default function AttendanceManager({
                           }`}>
                             {indRate}%
                           </span>
-                          <span className="text-[9px] text-slate-500 mt-1 uppercase tracking-widest font-bold">Total Latihan: {historyValues.length}</span>
+                          <span className="text-[9px] text-secondary mt-1 uppercase tracking-widest font-bold">Total Latihan: {historyValues.length}</span>
                         </div>
                       </td>
 
                       {/* Interactive 3D pill options */}
                       <td className="py-4 pr-2 text-right md:text-center">
-                        <div className="inline-flex items-center gap-1.5 p-1 bg-[#0B0A10] rounded-xl border border-[#2a2a35]">
+                        <div className="inline-flex items-center gap-1.5 p-1 bg-primary rounded-xl border border-theme">
                           
                           <button
                             id={`btn-attend-${s.id}-present`}
                             onClick={() => handleStatusChange(s.id, 'present')}
                             className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                               currentStatus === 'present'
-                                ? 'bg-emerald-500 text-white shadow-md scale-105'
-                                : 'text-slate-500 hover:bg-[#1c1c28]'
+                                ? 'bg-emerald-500 text-primary shadow-md scale-105'
+                                : 'text-secondary hover:neu-pressed'
                             }`}
                           >
                             Hadir
@@ -384,7 +384,7 @@ export default function AttendanceManager({
                             className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                               currentStatus === 'late'
                                 ? 'bg-yellow-500 text-slate-900 shadow-md scale-105'
-                                : 'text-slate-500 hover:bg-[#1c1c28]'
+                                : 'text-secondary hover:neu-pressed'
                             }`}
                           >
                             Izin
@@ -395,8 +395,8 @@ export default function AttendanceManager({
                             onClick={() => handleStatusChange(s.id, 'sick')}
                             className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                               currentStatus === 'sick'
-                                ? 'bg-orange-500 text-white shadow-md scale-105'
-                                : 'text-slate-500 hover:bg-[#1c1c28]'
+                                ? 'neu-button-accent scale-105'
+                                : 'text-secondary hover:neu-pressed'
                             }`}
                           >
                             Sakit
@@ -407,8 +407,8 @@ export default function AttendanceManager({
                             onClick={() => handleStatusChange(s.id, 'absent')}
                             className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                               currentStatus === 'absent'
-                                ? 'bg-rose-500 text-white shadow-md scale-105'
-                                : 'text-slate-500 hover:bg-[#1c1c28]'
+                                ? 'bg-rose-500 text-primary shadow-md scale-105'
+                                : 'text-secondary hover:neu-pressed'
                             }`}
                           >
                             Alfa
@@ -427,7 +427,7 @@ export default function AttendanceManager({
                               notes: s.notes || ''
                             });
                           }}
-                          className="text-[10px] font-bold uppercase tracking-widest text-orange-500 hover:text-white bg-orange-500/10 hover:bg-orange-500 border border-orange-500/30 px-3 py-1.5 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1.5"
+                          className="text-[10px] font-bold uppercase tracking-widest text-blue-500 hover:text-primary neu-button-accent/10 hover:neu-button-accent border border-blue-500/30 px-3 py-1.5 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1.5"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                           Nilai
@@ -444,9 +444,9 @@ export default function AttendanceManager({
         
         {/* Unrecorded Alert Box */}
         {stats.unrecorded > 0 && (
-          <div className="mt-5 p-4 bg-orange-500/10 border border-orange-500/30 text-orange-400 rounded-xl text-[11px] font-medium flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-orange-500 shrink-0" />
-            <span>Ada <strong className="text-white">{stats.unrecorded} murid</strong> belum dicatat kehadirannya pada tanggal {selectedDate}. Lengkapi presensi di atas untuk validasi data evaluasi harian.</span>
+          <div className="mt-5 p-4 neu-button-accent/10 border border-blue-500/30 text-blue-400 rounded-xl text-[11px] font-medium flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-blue-500 shrink-0" />
+            <span>Ada <strong className="text-primary">{stats.unrecorded} murid</strong> belum dicatat kehadirannya pada tanggal {selectedDate}. Lengkapi presensi di atas untuk validasi data evaluasi harian.</span>
           </div>
         )}
       </div>
@@ -466,16 +466,16 @@ export default function AttendanceManager({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-[#0B0A10] border border-orange-500/30 rounded-2xl p-5 md:p-6 w-full max-w-lg shadow-2xl space-y-4 text-xs text-slate-300 max-h-[90vh] overflow-y-auto custom-scrollbar z-10"
+              className="relative bg-primary border border-blue-500/30 rounded-2xl p-5 md:p-6 w-full max-w-lg shadow-2xl space-y-4 text-xs text-slate-300 max-h-[90vh] overflow-y-auto custom-scrollbar z-10"
             >
-              <div className="flex justify-between items-center border-b border-[#2a2a35] pb-3 mb-3">
+              <div className="flex justify-between items-center border-b border-theme pb-3 mb-3">
                 <div className="flex items-center gap-2">
-                  <Edit3 className="w-4 h-4 text-orange-500" />
-                  <span className="font-bold text-white uppercase text-[11px] tracking-widest">
+                  <Edit3 className="w-4 h-4 text-blue-500" />
+                  <span className="font-bold text-primary uppercase text-[11px] tracking-widest">
                     Evaluasi Harian & Penilaian Sesi
                   </span>
                 </div>
-                <button type="button" onClick={() => setEvalStudentId(null)} className="text-slate-400 hover:text-white transition-colors">
+                <button type="button" onClick={() => setEvalStudentId(null)} className="text-secondary hover:text-primary transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -485,8 +485,8 @@ export default function AttendanceManager({
                   {Object.entries(evalForm.skills).map(([skill, val]) => (
                     <div key={skill} className="space-y-1">
                       <div className="flex justify-between items-center text-[10px]">
-                        <label className="font-bold uppercase tracking-widest text-slate-400">{skill}</label>
-                        <span className="text-orange-500 font-bold">{val}</span>
+                        <label className="font-bold uppercase tracking-widest text-secondary">{skill}</label>
+                        <span className="text-blue-500 font-bold">{val}</span>
                       </div>
                       <input
                         type="range"
@@ -507,12 +507,12 @@ export default function AttendanceManager({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold uppercase tracking-widest text-[10px] text-slate-400">Catatan Harian (Opsional)</label>
+                  <label className="font-bold uppercase tracking-widest text-[10px] text-secondary">Catatan Harian (Opsional)</label>
                   <textarea
                     placeholder="Contoh: Fokus latihan hari ini baik, butuh perbaikan di footwork."
                     value={evalForm.notes}
                     onChange={(e) => setEvalForm({ ...evalForm, notes: e.target.value })}
-                    className="w-full text-xs p-3 rounded-xl border border-[#2a2a35] bg-[#1c1c28] text-white outline-none focus:border-orange-500/50 min-h-[80px]"
+                    className="w-full text-xs p-3 rounded-xl border border-theme neu-pressed text-primary outline-none focus:border-blue-500/50 min-h-[80px]"
                   />
                 </div>
 
@@ -529,7 +529,7 @@ export default function AttendanceManager({
                     }
                     setEvalStudentId(null);
                   }}
-                  className="w-full bg-gradient-to-r from-purple-700 to-orange-500 text-white font-bold uppercase tracking-widest py-3 rounded-xl shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:shadow-[0_4px_25px_rgba(249,115,22,0.5)] transition-all flex items-center justify-center gap-2 mt-2"
+                  className="w-full bg-gradient-to-r from-purple-700 to-blue-500 text-primary font-bold uppercase tracking-widest py-3 rounded-xl shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:shadow-[0_4px_25px_rgba(249,115,22,0.5)] transition-all flex items-center justify-center gap-2 mt-2"
                 >
                   <Check className="w-4 h-4" />
                   Simpan Evaluasi
