@@ -1,19 +1,16 @@
 import React, { useEffect } from 'react';
 import { collection, doc, setDoc, onSnapshot, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
-import { useAuth } from '../components/FirebaseProvider';
 import { Student, PracticeSession, ParentNotification, Coach } from '../types';
 
 export function useFirebaseSync(
   setStudents: React.Dispatch<React.SetStateAction<Student[]>>,
   setSchedule: React.Dispatch<React.SetStateAction<PracticeSession[]>>,
   setNotifications: React.Dispatch<React.SetStateAction<ParentNotification[]>>,
-  setCoaches: React.Dispatch<React.SetStateAction<Coach[]>>
+  setCoaches: React.Dispatch<React.SetStateAction<Coach[]>>,
+  setSettings: React.Dispatch<React.SetStateAction<any>>
 ) {
-  const { user } = useAuth();
-
   useEffect(() => {
-    if (!user) return;
 
     const unsubStudents = onSnapshot(collection(db, 'students'), (snapshot) => {
       const data: Student[] = [];
@@ -33,6 +30,11 @@ export function useFirebaseSync(
       if (data.length > 0) setNotifications(data);
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'parentNotifications'));
 
+    const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), (docSnap) => {
+      if (docSnap.exists()) {
+        setSettings(docSnap.data());
+      }
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'settings/global'));
     const unsubCoaches = onSnapshot(collection(db, 'coaches'), (snapshot) => {
       const data: Coach[] = [];
       snapshot.forEach(doc => data.push({ ...doc.data(), id: doc.id } as Coach));
@@ -44,8 +46,9 @@ export function useFirebaseSync(
       unsubSchedule();
       unsubNotifications();
       unsubCoaches();
+      unsubSettings();
     };
-  }, [user, setStudents, setSchedule, setNotifications, setCoaches]);
+  }, [setStudents, setSchedule, setNotifications, setCoaches, setSettings]);
 }
 
 export const syncStudentToFirebase = async (student: Student) => {
@@ -97,5 +100,22 @@ export const syncNotificationToFirebase = async (notif: ParentNotification) => {
     await setDoc(doc(db, 'parentNotifications', id), { ...data, createdAt: (data as any).createdAt || serverTimestamp() }, { merge: true });
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, `parentNotifications/${notif.id}`);
+  }
+};
+
+export const syncSettingsToFirebase = async (settings: any) => {
+  try {
+    const jsonString = JSON.stringify(settings);
+    if (jsonString.length > 900000) {
+      console.warn("Settings document is too large to sync to Firebase (exceeds 1MB). Syncing safe version.");
+      const safeSettings = { ...settings };
+      if (safeSettings.bannerUrl && safeSettings.bannerUrl.length > 300000) safeSettings.bannerUrl = '';
+      if (safeSettings.logoUrl && safeSettings.logoUrl.length > 300000) safeSettings.logoUrl = '';
+      await setDoc(doc(db, 'settings', 'global'), safeSettings, { merge: true });
+      return;
+    }
+    await setDoc(doc(db, 'settings', 'global'), settings, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `settings/global`);
   }
 };

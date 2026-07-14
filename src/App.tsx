@@ -7,7 +7,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Student, PracticeSession, ParentNotification, StudentSkills, Coach } from './types';
 import { INITIAL_STUDENTS, INITIAL_SCHEDULE, INITIAL_NOTIFICATIONS, INITIAL_COACHES } from './data/students';
 import { useAuth } from './components/FirebaseProvider';
-import { useFirebaseSync, syncStudentToFirebase, deleteStudentFromFirebase, syncSessionToFirebase, syncNotificationToFirebase, syncCoachToFirebase, deleteCoachFromFirebase } from './hooks/useFirebaseSync';
+import { useFirebaseSync, syncStudentToFirebase, deleteStudentFromFirebase, syncSessionToFirebase, syncNotificationToFirebase, syncCoachToFirebase, deleteCoachFromFirebase, syncSettingsToFirebase } from './hooks/useFirebaseSync';
 
 // Import components
 import StudentStats from './components/StudentStats';
@@ -53,22 +53,65 @@ import { Search, Sun, Moon, Trophy,
  , UserPlus, BookOpen} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+
+const compressImage = (file: File, maxWidth = 1200, maxHeight = 800): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.6)); // compress with quality 0.6
+      };
+      img.onerror = (error) => reject(error);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 export default function App() {
   const { user, signInWithGoogle, logout } = useAuth();
 
-  const SidebarButton = ({ id, icon, label, badge }: { id: any, icon: any, label: string, badge?: number }) => (
+    const SidebarButton = ({ id, icon, label, badge }: { id: any, icon: any, label: string, badge?: number }) => (
     <button
-      onClick={() => setActiveTab(id)}
-      className={`w-full text-left px-4 py-3 rounded-xl font-medium text-xs flex items-center justify-between transition-all ${
-        activeTab === id ? 'bg-gradient-to-r from-purple-900/40 to-blue-900/40 text-blue-500 border border-blue-500/30 font-bold' : 'hover:neu-flat-sm text-secondary border border-transparent'
+      onClick={() => { setActiveTab(id); setIsMobileMenuOpen(false); }}
+      className={`relative w-full text-left px-4 py-3 rounded-xl font-medium text-xs flex items-center justify-between transition-colors ${
+        activeTab === id ? 'text-blue-500 font-bold' : 'hover:bg-white/5 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400'
       }`}
     >
-      <div className="flex items-center gap-3">
+      {activeTab === id && (
+        <motion.div
+          layoutId="sidebar-active-tab"
+          className="absolute inset-0 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-xl"
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        />
+      )}
+      <div className="flex items-center gap-3 relative z-10">
         {icon}
         {label}
       </div>
       {!!badge && badge > 0 && (
-        <span className="bg-red-500 text-primary text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+        <span className="relative z-10 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold shadow-sm">
           {badge}
         </span>
       )}
@@ -133,7 +176,7 @@ export default function App() {
   }, [theme]);
 
 
-  useFirebaseSync(setStudents, setSchedule, setNotifications, setCoaches);
+  useFirebaseSync(setStudents, setSchedule, setNotifications, setCoaches, setAcademySettings);
 
   
   useEffect(() => {
@@ -165,8 +208,10 @@ export default function App() {
   }, [coaches]);
 
 
+    // Sync settings to LocalStorage and Firebase
   useEffect(() => {
     localStorage.setItem('hoop_portal_settings', JSON.stringify(academySettings));
+    syncSettingsToFirebase(academySettings);
   }, [academySettings]);
 
   // Handle cross-origin messages from the Generator Iframe (Cara 1)
@@ -207,7 +252,7 @@ export default function App() {
     setStudents(prev => {
       const next = prev.map(s => (s.id === studentId ? { ...s, skills, notes, evaluatedBy } : s));
       const updatedStudent = next.find(s => s.id === studentId);
-      if (updatedStudent && user) syncStudentToFirebase(updatedStudent);
+      if (updatedStudent ) syncStudentToFirebase(updatedStudent);
       return next;
     });
   };
@@ -218,7 +263,7 @@ export default function App() {
       id: `std_${Date.now()}`,
       attendanceHistory: {}
     };
-    if (user) syncStudentToFirebase(newStudent);
+    syncStudentToFirebase(newStudent);
     setStudents(prev => [...prev, newStudent]);
     setSelectedStudentId(newStudent.id);
   };
@@ -227,13 +272,13 @@ export default function App() {
     setStudents(prev => {
       const next = prev.map(s => (s.id === studentId ? { ...s, ...studentData } : s));
       const updatedStudent = next.find(s => s.id === studentId);
-      if (updatedStudent && user) syncStudentToFirebase(updatedStudent);
+      if (updatedStudent ) syncStudentToFirebase(updatedStudent);
       return next;
     });
   };
 
   const handleDeleteStudent = (studentId: string) => {
-    if (user) deleteStudentFromFirebase(studentId);
+    deleteStudentFromFirebase(studentId);
     setStudents(prev => {
       const updated = prev.filter(s => s.id !== studentId);
       if (selectedStudentId === studentId && updated.length > 0) {
@@ -248,7 +293,7 @@ export default function App() {
       ...coachData,
       id: `c_${Date.now()}`
     };
-    if (user) syncCoachToFirebase(newCoach);
+    syncCoachToFirebase(newCoach);
     setCoaches(prev => [...prev, newCoach]);
   };
 
@@ -256,13 +301,13 @@ export default function App() {
     setCoaches(prev => {
       const next = prev.map(c => (c.id === coachId ? { ...c, ...coachData } : c));
       const updatedCoach = next.find(c => c.id === coachId);
-      if (updatedCoach && user) syncCoachToFirebase(updatedCoach);
+      if (updatedCoach ) syncCoachToFirebase(updatedCoach);
       return next;
     });
   };
 
   const handleDeleteCoach = (coachId: string) => {
-    if (user) deleteCoachFromFirebase(coachId);
+    deleteCoachFromFirebase(coachId);
     setCoaches(prev => prev.filter(c => c.id !== coachId));
   };
 
@@ -281,7 +326,7 @@ export default function App() {
         return s;
       });
       const updatedStudent = next.find(s => s.id === studentId);
-      if (updatedStudent && user) syncStudentToFirebase(updatedStudent);
+      if (updatedStudent ) syncStudentToFirebase(updatedStudent);
       return next;
     });
   };
@@ -292,7 +337,7 @@ export default function App() {
       id: `prac_${Date.now()}`,
       completed: false
     };
-    if (user) syncSessionToFirebase(newSession);
+    syncSessionToFirebase(newSession);
     setSchedule(prev => [...prev, newSession]);
   };
 
@@ -300,7 +345,7 @@ export default function App() {
     setSchedule(prev => {
       const next = prev.map(p => (p.id === id ? { ...p, completed: !p.completed } : p));
       const updatedSession = next.find(p => p.id === id);
-      if (updatedSession && user) syncSessionToFirebase(updatedSession);
+      if (updatedSession ) syncSessionToFirebase(updatedSession);
       return next;
     });
   };
@@ -330,7 +375,7 @@ export default function App() {
       status: 'sent'
     };
     
-    if (user) syncNotificationToFirebase(newNotif);
+    syncNotificationToFirebase(newNotif);
     setNotifications(prev => [newNotif, ...prev]);
 
     // Open WhatsApp URL if parent has phone number
@@ -353,7 +398,7 @@ export default function App() {
       status: 'sent'
     };
 
-    if (user) syncNotificationToFirebase(newNotif);
+    syncNotificationToFirebase(newNotif);
     setNotifications(prev => [newNotif, ...prev]);
 
     // Open WhatsApp URL if channel is WhatsApp and parent has phone number
@@ -511,108 +556,132 @@ export default function App() {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#13131a] to-transparent"></div>
               </div>
             )}
-            <div className="w-full flex items-center justify-between relative px-4 py-4 z-10">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-primary/50 rounded-xl flex items-center justify-center border border-theme overflow-hidden shrink-0 shadow-lg">
+                        <div className="w-full flex items-center justify-between relative px-4 py-4 z-10">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/50 rounded-xl flex items-center justify-center border border-theme overflow-hidden shrink-0 shadow-lg">
                     {academySettings.logoUrl ? (
-                        <img src={academySettings.logoUrl} alt="Logo" className="w-full h-full object-contain p-1.5" />
+                        <img src={academySettings.logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
                     ) : (
-                        academySettings.logoIcon
+                        <span className="text-xl">{academySettings.logoIcon}</span>
                     )}
                     </div>
                     <div className="flex flex-col justify-center">
                     <h1 className="text-sm font-black uppercase tracking-tight text-primary leading-none">
                         {academySettings.title}
                     </h1>
-                    <h2 className="text-[10px] font-bold uppercase tracking-widest text-blue-500 mt-1">
+                    <h2 className="text-[9px] font-bold uppercase tracking-widest text-blue-500 mt-1">
                         {academySettings.subtitle}
                     </h2>
                     </div>
                 </div>
+                <button 
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-primary transition-all shadow-lg shrink-0"
+                  title="Toggle Theme"
+                >
+                  {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-slate-700" />}
+                </button>
             </div>
         </header>
 
         {/* Main Scrolling Area */}
         <div className="flex-1 w-full overflow-y-auto custom-scrollbar relative">
-          {academySettings.bannerUrl && activeTab === 'dashboard' && (
-             <div className="hidden lg:block w-full h-64 relative border-b border-theme shrink-0">
-                 <img src={academySettings.bannerUrl} alt="Banner" className="w-full h-full object-cover opacity-40" />
-                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B0A10] to-transparent"></div>
-             </div>
-          )}
+        {/* Main Header (Right Pane) */}
+        <header className={`hidden lg:flex w-full relative z-40 border-b border-theme shrink-0 transition-all duration-300 ${academySettings.headerAutoScroll ? 'absolute top-0' : 'sticky top-0'} ${academySettings.headerSize === 'sm' ? 'h-20' : academySettings.headerSize === 'lg' ? 'h-48' : 'h-32'}`}>
+            {academySettings.bannerUrl && (
+              <div className="absolute inset-0 z-0 overflow-hidden">
+                <img src={academySettings.bannerUrl} alt="Header Background" className="w-full h-full object-cover opacity-60 blur-md scale-105" />
+                <div className="absolute inset-0 bg-secondary/40 backdrop-blur-sm"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-secondary/90"></div>
+              </div>
+            )}
+            <div className="w-full h-full flex items-center justify-between relative px-8 py-4 z-10">
+                <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-primary/50 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 overflow-hidden shrink-0 shadow-2xl">
+                    {academySettings.logoUrl ? (
+                        <img src={academySettings.logoUrl} alt="Logo" className="w-full h-full object-contain p-2" />
+                    ) : (
+                        <span className="text-3xl">{academySettings.logoIcon}</span>
+                    )}
+                    </div>
+                    <div className="flex flex-col justify-center">
+                    <h1 className="text-2xl font-black uppercase tracking-tight text-white drop-shadow-md leading-none">
+                        {academySettings.title}
+                    </h1>
+                    <h2 className="text-xs font-bold uppercase tracking-widest text-blue-400 mt-2 drop-shadow-md">
+                        {academySettings.subtitle}
+                    </h2>
+                    </div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                    className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white transition-all shadow-lg"
+                    title="Toggle Theme"
+                  >
+                    {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                  </button>
+                  {user && (
+                    <button 
+                      onClick={logout}
+                      className="w-10 h-10 rounded-xl bg-red-500/80 hover:bg-red-500 backdrop-blur-md border border-red-500/50 flex items-center justify-center text-white transition-all shadow-lg"
+                      title="Logout"
+                    >
+                      <LogOut className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+            </div>
+                </header>
           <main className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 relative min-h-full">
         <AnimatePresence mode="wait">
-          
+
           {/* TAB 1: DASHBOARD OVERVIEW */}
           {activeTab === 'dashboard' && (
             <motion.div
               key="dashboard"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-6 max-w-lg mx-auto md:max-w-none pb-20"
-              id="dashboard-container"
+              initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
             >
-              <div className="relative z-10 space-y-8">
-                {/* Header Greeting */}
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="neu-flat p-5 md:p-6 flex flex-col items-start gap-4 group transition-all duration-300 border border-theme">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                    <Users className="w-6 h-6" />
+                  </div>
                   <div>
-                    <h2 className="text-3xl md:text-4xl font-black text-primary leading-tight font-display tracking-tight">
-                      Hi, <span className="text-blue-500">Coach Andi!</span>
-                    </h2>
-                    <p className="text-sm text-secondary font-medium mt-1">
-                      Let's learn something new today!
-                    </p>
-                  </div>
-                  
-                                    {/* Search Bar */}
-                  <div className="w-full md:w-auto relative group">
-                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                      <Search className="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                    </div>
-                    <input 
-                      type="text" 
-                      placeholder="Search for tools..." 
-                      className="w-full md:w-72 pl-11 pr-4 py-3.5 rounded-full bg-white/90 dark:bg-[#1a1a24]/90 backdrop-blur-xl border border-white/40 dark:border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium text-slate-800 dark:text-white placeholder-slate-400 transition-all"
-                    />
+                    <h3 className="text-2xl font-black text-primary">{students.length}</h3>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Atlet</p>
                   </div>
                 </div>
-
-                {/* Categories Title */}
-                <div className="flex justify-between items-end">
-                  <h3 className="text-lg font-bold text-primary tracking-wide">Categories</h3>
-                  <button className="text-xs font-bold text-blue-500 hover:text-blue-600 transition-colors">View All</button>
+                <div className="neu-flat p-5 md:p-6 flex flex-col items-start gap-4 group transition-all duration-300 border border-theme">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+                    <Calendar className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-primary">{schedule.length}</h3>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Sesi Latihan</p>
+                  </div>
                 </div>
-
-                                {/* Grid Categories */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                  {[
-                    { id: 'generator-student', label: 'Form Siswa Baru', subtitle: 'Pendaftaran', icon: <UserPlus className="w-7 h-7 text-white" />, color: 'from-[#ff8f71] to-[#ff3e5e]' },
-                    { id: 'stats', label: 'Data Siswa & Kelas', subtitle: 'ID Card Siswa', icon: <Users className="w-7 h-7 text-white" />, color: 'from-[#71a0ff] to-[#3e68ff]' },
-                    { id: 'schedule', label: 'Jadwal Latihan', subtitle: 'Kalender Sesi', icon: <Calendar className="w-7 h-7 text-white" />, color: 'from-[#42e8e0] to-[#0ea5e9]' },
-                    { id: 'tutorials', label: 'Materi', subtitle: 'Video & Artikel', icon: <BookOpen className="w-7 h-7 text-white" />, color: 'from-[#c084fc] to-[#9333ea]' },
-                    { id: 'attendance', label: 'Penilaian & Absensi', subtitle: 'Kehadiran', icon: <FileSpreadsheet className="w-7 h-7 text-white" />, color: 'from-[#ffb071] to-[#ff713e]' },
-                    { id: 'generator-athlete', label: 'Form & Kartu Atlet', subtitle: 'Manajemen Atlet', icon: <Award className="w-7 h-7 text-white" />, color: 'from-[#38bdf8] to-[#0284c7]' },
-                    { id: 'report', label: 'Raport', subtitle: 'Evaluasi', icon: <Trophy className="w-7 h-7 text-white" />, color: 'from-[#fbbf24] to-[#d97706]' },
-                    { id: 'generator-coach', label: 'Generator Coach', subtitle: 'ID Card Coach', icon: <Shield className="w-7 h-7 text-white" />, color: 'from-[#f43f5e] to-[#be123c]' },
-                    { id: 'coaches', label: 'Daftar Coach', subtitle: 'Direktori', icon: <User className="w-7 h-7 text-white" />, color: 'from-[#818cf8] to-[#4f46e5]' },
-                    { id: 'notifications', label: 'Notifikasi', subtitle: 'Pesan Baru', icon: <Bell className="w-7 h-7 text-white" />, color: 'from-[#a78bfa] to-[#7c3aed]' }
-                  ].map((cat, idx) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setActiveTab(cat.id as any)}
-                      className="bg-white/90 dark:bg-[#1a1a24]/90 backdrop-blur-xl p-5 md:p-6 rounded-3xl flex flex-col items-start gap-4 group hover:shadow-2xl transition-all duration-300 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-white/40 dark:border-white/5"
-                    >
-                      <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center shadow-lg transform group-hover:-translate-y-2 transition-transform duration-300`}>
-                        {cat.icon}
-                      </div>
-                      <div className="text-left space-y-0.5">
-                        <span className="text-sm md:text-base font-bold text-slate-800 dark:text-white block leading-tight">{cat.label}</span>
-                        <span className="text-[11px] md:text-xs text-slate-500 font-medium">{cat.subtitle}</span>
-                      </div>
-                    </button>
-                  ))}
+                <div className="neu-flat p-5 md:p-6 flex flex-col items-start gap-4 group transition-all duration-300 border border-theme">
+                  <div className="w-12 h-12 rounded-2xl bg-green-500/10 text-green-500 flex items-center justify-center">
+                    <MessageSquare className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-primary">{notifications.length}</h3>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Notifikasi</p>
+                  </div>
+                </div>
+                <div className="neu-flat p-5 md:p-6 flex flex-col items-start gap-4 group transition-all duration-300 border border-theme">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
+                    <User className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-primary">{coaches.length}</h3>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Pelatih Aktif</p>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -622,10 +691,10 @@ export default function App() {
           {activeTab === 'tutorials' && (
             <motion.div
               key="tutorials"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
             >
               <TutorialViewer />
             </motion.div>
@@ -635,41 +704,35 @@ export default function App() {
           {activeTab === 'stats' && (
             <motion.div
               key="stats"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
             >
-              <StudentStats
+              <StudentStats 
                 students={students}
                 selectedStudentId={selectedStudentId}
                 onSelectStudent={setSelectedStudentId}
-                onUpdateSkills={handleUpdateSkills}
                 coaches={coaches}
-                onUpdateStudent={handleUpdateStudent}
-                onAddStudent={handleAddStudent}
-                onDeleteStudent={handleDeleteStudent}
-              onSaveCard={(card) => {
-                setSavedCards([...savedCards, card]);
-              }}
-              savedCards={savedCards}
-              onImportCard={(studentId, cardId) => {
-                const card = savedCards.find(c => c.id === cardId);
-                if (card) {
-                  // Update student info with imported card info
-                  handleUpdateStudent(studentId, {
-                    name: card.name,
-                    position: card.position as any,
-                    height: card.height,
-                    weight: card.weight,
-                    avatar: card.avatar,
-                    fullBodyPhoto: card.fullBodyPhoto,
-                    parentName: card.parentName,
-                    parentPhone: card.parentPhone
-                  });
-                  alert(`Kartu "${card.name}" berhasil diimport!`);
-                }
-              }}
+                onAddStudent={(newStudent) => {
+                  const student = { ...newStudent, id: Date.now().toString(), attendanceHistory: {} } as Student;
+                  setStudents([...students, student]);
+                  if (user) syncStudentToFirebase(student);
+                }}
+                onUpdateStudent={(id, data) => {
+                  setStudents(students.map(s => s.id === id ? { ...s, ...data } : s));
+                  const updatedStudent = { ...students.find(s => s.id === id), ...data } as Student;
+                  if (updatedStudent && user) syncStudentToFirebase(updatedStudent);
+                }}
+                onDeleteStudent={(id) => {
+                  setStudents(students.filter(s => s.id !== id));
+                  if (user) deleteStudentFromFirebase(id);
+                }}
+                onUpdateSkills={(id, skills, notes, evaluatedBy) => {
+                  setStudents(students.map(s => s.id === id ? { ...s, skills, notes, evaluatedBy } : s));
+                  const updatedStudent = { ...students.find(s => s.id === id), skills, notes, evaluatedBy } as Student;
+                  if (updatedStudent && user) syncStudentToFirebase(updatedStudent);
+                }}
               />
             </motion.div>
           )}
@@ -678,10 +741,10 @@ export default function App() {
           {activeTab === 'report' && (
             <motion.div
               key="report"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
+                            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
             >
               {/* Quick selector of student top bar inside reports */}
               <div className="neu-flat p-5 shadow-lg mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -713,10 +776,10 @@ export default function App() {
           {activeTab === 'attendance' && (
             <motion.div
               key="attendance"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
+                            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
             >
               <AttendanceManager
                 students={students}
@@ -732,10 +795,10 @@ export default function App() {
           {activeTab === 'schedule' && (
             <motion.div
               key="schedule"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
+                            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
             >
               <ScheduleManager
                 schedule={schedule}
@@ -749,10 +812,10 @@ export default function App() {
           {activeTab === 'notifications' && (
             <motion.div
               key="notifications"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
+                            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
             >
               <NotificationCenter
                 students={students}
@@ -768,10 +831,10 @@ export default function App() {
           {activeTab === 'coaches' && (
             <motion.div
               key="coaches"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
+                            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
             >
               <div className="max-w-7xl mx-auto space-y-6">
                 <div className="neu-flat p-6 md:p-8 shadow-lg">
@@ -840,10 +903,10 @@ export default function App() {
           {activeTab === 'generator-coach' && (
             <motion.div
               key="generator-coach"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
+                            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
               className="h-[calc(100vh-160px)] min-h-[600px] w-full"
             >
               <div className="max-w-7xl mx-auto h-full space-y-6">
@@ -858,10 +921,10 @@ export default function App() {
           {activeTab === 'generator-student' && (
             <motion.div
               key="generator-student"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
+                            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
               className="h-[calc(100vh-160px)] min-h-[600px] w-full"
             >
               <div className="max-w-7xl mx-auto h-full space-y-6">
@@ -876,10 +939,10 @@ export default function App() {
           {activeTab === 'generator-athlete' && (
             <motion.div
               key="generator-athlete"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
+                            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
               className="h-[calc(100vh-160px)] min-h-[600px] w-full"
             >
               <div className="max-w-7xl mx-auto h-full space-y-6">
@@ -894,10 +957,10 @@ export default function App() {
           {activeTab === 'settings' && (
             <motion.div
               key="settings"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
+                            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
             >
               <div className="max-w-2xl mx-auto space-y-6">
                 <div className="neu-flat p-6 md:p-8 shadow-lg relative overflow-hidden">
@@ -940,11 +1003,12 @@ export default function App() {
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
                                   if (file) {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                      setAcademySettings({...academySettings, logoUrl: reader.result as string});
-                                    };
-                                    reader.readAsDataURL(file);
+                                    compressImage(file, 400, 400).then(compressedDataUrl => {
+                                      setAcademySettings({...academySettings, logoUrl: compressedDataUrl});
+                                    }).catch(err => {
+                                      console.error("Image compression failed:", err);
+                                      alert("Gagal memproses gambar. Coba gambar lain.");
+                                    });
                                   }
                                 }}
                               />
@@ -973,11 +1037,12 @@ export default function App() {
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
                                   if (file) {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                      setAcademySettings({...academySettings, bannerUrl: reader.result as string});
-                                    };
-                                    reader.readAsDataURL(file);
+                                    compressImage(file, 1600, 1000).then(compressedDataUrl => {
+                                      setAcademySettings({...academySettings, bannerUrl: compressedDataUrl});
+                                    }).catch(err => {
+                                      console.error("Image compression failed:", err);
+                                      alert("Gagal memproses gambar. Coba gambar lain.");
+                                    });
                                   }
                                 }}
                               />
@@ -992,6 +1057,40 @@ export default function App() {
                             )}
                           </div>
                         </div>
+                        <div className="pt-4 border-t border-theme">
+                          <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Pengaturan Header Top</label>
+                          <div className="flex flex-col gap-4">
+                            <label className="flex items-center gap-3 cursor-pointer">
+                              <div className="relative">
+                                <input 
+                                  type="checkbox" 
+                                  className="sr-only" 
+                                  checked={academySettings.headerAutoScroll || false}
+                                  onChange={(e) => setAcademySettings({...academySettings, headerAutoScroll: e.target.checked})}
+                                />
+                                <div className={`block w-10 h-6 rounded-full transition-colors ${academySettings.headerAutoScroll ? 'bg-blue-500' : 'bg-slate-700'}`}></div>
+                                <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${academySettings.headerAutoScroll ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                              </div>
+                              <span className="text-xs font-bold text-primary">Auto Scroll Header (Scroll dengan konten)</span>
+                            </label>
+                            
+                            <div>
+                              <label className="text-[10px] font-bold text-secondary block mb-1.5 uppercase tracking-widest">Ukuran Header</label>
+                              <div className="flex gap-3">
+                                {['sm', 'md', 'lg'].map(size => (
+                                  <button
+                                    key={size}
+                                    onClick={() => setAcademySettings({...academySettings, headerSize: size})}
+                                    className={`flex-1 p-2 rounded-xl text-xs font-bold transition-colors ${academySettings.headerSize === size ? 'bg-blue-500 text-white' : 'neu-pressed text-secondary'}`}
+                                  >
+                                    {size === 'sm' ? 'Kecil' : size === 'md' ? 'Sedang' : 'Besar'}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
                       </div>
 
                       <div className="flex-1 space-y-4">
@@ -1091,6 +1190,17 @@ export default function App() {
                   </div>
                 </div>
             </div>
+            <div className="p-4 border-t border-theme">
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="w-full text-left px-4 py-3 rounded-xl font-medium text-xs flex items-center justify-between transition-all hover:bg-secondary/80 text-secondary border border-transparent neu-button"
+              >
+                <div className="flex items-center gap-3">
+                  {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                </div>
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1098,48 +1208,59 @@ export default function App() {
         <div className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={() => setIsMobileMenuOpen(false)}></div>
       )}
 
-      {/* Bottom Navigation (Mobile Only) */}
-      <div className="lg:hidden fixed bottom-4 left-4 right-4 neu-flat flex justify-around items-center py-2 px-2 z-50 shadow-2xl">
-        <button
-          onClick={() => { setActiveTab('dashboard'); setIsMobileMenuOpen(false); }}
-          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'dashboard' ? 'text-blue-500' : 'text-secondary'}`}
-        >
-          <Home className="w-5 h-5" />
-          <span className="text-[9px] font-bold">Beranda</span>
-        </button>
-        <button
-          onClick={() => { setActiveTab('stats'); setIsMobileMenuOpen(false); }}
-          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'stats' ? 'text-blue-500' : 'text-secondary'}`}
-        >
-          <Users className="w-5 h-5" />
-          <span className="text-[9px] font-bold">Atlet</span>
-        </button>
-        
+            {/* Bottom Navigation (Mobile Only) */}
+      <div className="lg:hidden fixed bottom-4 left-4 right-4 neu-flat flex justify-around items-center py-2 px-2 z-50 border border-theme">
+        {[
+          { id: 'dashboard', icon: Home, label: 'Beranda' },
+          { id: 'stats', icon: Users, label: 'Atlet' }
+        ].map((item) => (
+          <button
+            key={item.id}
+            onClick={() => { setActiveTab(item.id as any); setIsMobileMenuOpen(false); }}
+            className={`relative flex flex-col items-center justify-center w-16 h-12 gap-1 z-10 transition-colors ${activeTab === item.id ? 'text-blue-500' : 'text-slate-500 dark:text-slate-400'}`}
+          >
+            {activeTab === item.id && (
+              <motion.div
+                layoutId="bottom-active-tab"
+                className="absolute inset-0 bg-blue-50 dark:bg-blue-900/20 rounded-2xl -z-10"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+            )}
+            <item.icon className="w-5 h-5" />
+            <span className="text-[9px] font-bold">{item.label}</span>
+          </button>
+        ))}
+
         {/* Menu Toggle Button in Center */}
-        <div className="relative -top-5 flex flex-col items-center">
+        <div className="relative -top-6 flex flex-col items-center">
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="w-14 h-14 rounded-full bg-gradient-to-br from-[#1c1c28] to-[#13131a] flex items-center justify-center border-4 border-[#0B0A10] text-blue-500 shadow-xl hover:text-blue-400"
+            className="w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 hover:bg-blue-600 transition-colors border-4 border-secondary"
           >
             <Menu className="w-6 h-6" />
           </button>
-          <span className="text-[9px] text-secondary font-bold absolute -bottom-4 w-20 text-center">Menu</span>
         </div>
 
-        <button
-          onClick={() => { setActiveTab('report'); setIsMobileMenuOpen(false); }}
-          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'report' ? 'text-blue-500' : 'text-secondary'}`}
-        >
-          <Trophy className="w-5 h-5" />
-          <span className="text-[9px] font-bold">Rapor</span>
-        </button>
-        <button
-          onClick={() => { setActiveTab('attendance'); setIsMobileMenuOpen(false); }}
-          className={`flex flex-col items-center justify-center w-16 pb-2 pt-1 gap-1 ${activeTab === 'attendance' ? 'text-blue-500' : 'text-secondary'}`}
-        >
-          <FileSpreadsheet className="w-5 h-5" />
-          <span className="text-[9px] font-bold">Absensi</span>
-        </button>
+        {[
+          { id: 'report', icon: Trophy, label: 'Rapor' },
+          { id: 'attendance', icon: FileSpreadsheet, label: 'Absensi' }
+        ].map((item) => (
+          <button
+            key={item.id}
+            onClick={() => { setActiveTab(item.id as any); setIsMobileMenuOpen(false); }}
+            className={`relative flex flex-col items-center justify-center w-16 h-12 gap-1 z-10 transition-colors ${activeTab === item.id ? 'text-blue-500' : 'text-slate-500 dark:text-slate-400'}`}
+          >
+            {activeTab === item.id && (
+              <motion.div
+                layoutId="bottom-active-tab"
+                className="absolute inset-0 bg-blue-50 dark:bg-blue-900/20 rounded-2xl -z-10"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+            )}
+            <item.icon className="w-5 h-5" />
+            <span className="text-[9px] font-bold">{item.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );

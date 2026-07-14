@@ -19,7 +19,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+      useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((u) => {
       setUser(u);
       setLoading(false);
